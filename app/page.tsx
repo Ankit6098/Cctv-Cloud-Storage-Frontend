@@ -1,365 +1,242 @@
 "use client";
+
 import { useEffect, useRef, useState } from "react";
 import Hls from "hls.js";
+import {
+  Circle,
+  Play,
+  History,
+  Maximize,
+  Volume2,
+  VolumeX,
+  ShieldCheck,
+  Settings,
+  Activity,
+} from "lucide-react";
+import { TbDeviceCctv } from "react-icons/tb";
 
-interface Status {
-  status: string;
-  rtspUrl: string;
-  recordingSize: number;
-  m3u8Exists: boolean;
-  streamUrl: string;
-  message: string;
-}
 
 export default function Home() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  const streamUrl = "http://localhost:5000/stream/index.m3u8";
+  const containerRef = useRef<HTMLDivElement | null>(null);
 
-  console.log("🚀 Page component rendered, initializing stream...");
+  const [mode, setMode] = useState<"live" | "preview">("live");
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [loadingPreview, setLoadingPreview] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isMuted, setIsMuted] = useState(true);
+  const [currentTime, setCurrentTime] = useState(new Date());
 
-  const [status, setStatus] = useState<Status | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [testPassword, setTestPassword] = useState("");
-  const [testResult, setTestResult] = useState<any>(null);
-  const [testing, setTesting] = useState(false);
-
-  // Fetch backend status
+  // Clock Logic
   useEffect(() => {
-    const fetchStatus = async () => {
-      try {
-        const res = await fetch("http://localhost:5000/api/status");
-        const data = await res.json();
-        setStatus(data);
-        setLoading(false);
-        console.log("Backend status:", data);
-      } catch (err) {
-        console.error("Failed to fetch status:", err);
-        setLoading(false);
-      }
-    };
-
-    fetchStatus();
-    const interval = setInterval(fetchStatus, 5000); // Refresh every 5 seconds
-    return () => clearInterval(interval);
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
   }, []);
 
-  // Setup HLS stream
+  // HLS Setup
   useEffect(() => {
-    console.log("🎬 HLS useEffect started");
+    const video = videoRef.current;
+    if (!video) return;
 
     let hls: Hls | null = null;
-    let retryAttempts = 0;
-    const maxRetries = 5;
+    const streamUrl =
+      mode === "live" ? "http://localhost:5000/stream/index.m3u8" : previewUrl;
 
-    const attachStream = () => {
-      const video = videoRef.current;
-      console.log("📺 Video element on attempt", retryAttempts + 1, ":", video);
+    if (!streamUrl) return;
 
-      if (!video) {
-        if (retryAttempts < maxRetries) {
-          retryAttempts++;
-          console.log(
-            `⏱️ Video not ready, retrying in 200ms (attempt ${retryAttempts}/${maxRetries})...`,
-          );
-          setTimeout(attachStream, 200);
-        } else {
-          console.error("❌ Video element still not found after retries!");
-        }
-        return;
-      }
+    if (Hls.isSupported()) {
+      hls = new Hls({
+        lowLatencyMode: mode === "live",
+        maxBufferLength: 2,
+        backBufferLength: 2,
+        enableWorker: true,
+      });
 
-      console.log("✅ Video element found!");
-      console.log("📍 Stream URL:", "http://localhost:5000/stream/index.m3u8");
+      hls.attachMedia(video);
+      hls.on(Hls.Events.MEDIA_ATTACHED, () => {
+        hls?.loadSource(streamUrl);
+      });
 
-      if (!Hls.isSupported()) {
-        console.log("🍎 HLS.js not supported, checking native support...");
-        if (video.canPlayType("application/vnd.apple.mpegurl")) {
-          console.log("🍎 Using native HLS (Safari/iOS)");
-          video.src = "http://localhost:5000/stream/index.m3u8";
-          video.play().catch((e) => console.error("Play error:", e));
-        } else {
-          console.error("❌ HLS not supported in this browser");
-        }
-        return;
-      }
-
-      console.log("✅ HLS.js supported, initializing...");
-      try {
-        hls = new Hls({
-          maxBufferLength: 10,
-          maxMaxBufferLength: 30,
-          startLevel: -1,
-          enableWorker: true,
-          lowLatencyMode: true,
-          manifestLoadingTimeOut: 10000,
-          fragLoadingTimeOut: 20000,
-        });
-
-        hls.attachMedia(video);
-        console.log("✅ HLS attached to video");
-
-        hls.on(Hls.Events.MEDIA_ATTACHED, () => {
-          console.log("📡 Media attached, loading source...");
-          hls?.loadSource("http://localhost:5000/stream/index.m3u8");
-        });
-
-        hls.on(Hls.Events.MANIFEST_PARSED, () => {
-          console.log("✅ Manifest parsed! Starting playback...");
-          video.play().catch((e) => console.error("Play error:", e));
-        });
-
-        hls.on(Hls.Events.ERROR, (event, data) => {
-          console.error("❌ HLS Error:", data.type, data.details);
-          if (data.fatal) {
-            console.error("💥 Fatal error occurred");
-          }
-        });
-      } catch (e) {
-        console.error("❌ HLS initialization error:", e);
-      }
-    };
-
-    // Start attaching stream with initial delay
-    console.log("⏱️ Starting stream attachment in 100ms...");
-    const timer = setTimeout(attachStream, 100);
-
-    return () => {
-      clearTimeout(timer);
-      if (hls) {
-        console.log("🧹 Destroying HLS");
-        hls.destroy();
-      }
-    };
-  }, []);
-
-  // Test RTSP connection
-  const handleTestPassword = async () => {
-    if (!testPassword) {
-      alert("Please enter a password");
-      return;
+      hls.on(Hls.Events.MANIFEST_PARSED, () => {
+        video.play().catch(() => {});
+      });
+    } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
+      video.src = streamUrl;
+      video.play().catch(() => {});
     }
 
-    setTesting(true);
-    try {
-      const res = await fetch("http://localhost:5000/api/test-rtsp", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password: testPassword }),
-      });
-      const result = await res.json();
-      setTestResult(result);
+    return () => hls?.destroy();
+  }, [mode, previewUrl]);
 
-      if (result.success) {
-        // Update backend with successful password
-        const updateRes = await fetch("http://localhost:5000/api/update-rtsp", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ password: testPassword }),
-        });
-        const updateData = await updateRes.json();
-        alert(
-          "Password works! " +
-            updateData.message +
-            "\nPlease refresh the page after restarting the backend.",
-        );
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      containerRef.current?.requestFullscreen();
+      setIsFullscreen(true);
+    } else {
+      document.exitFullscreen();
+      setIsFullscreen(false);
+    }
+  };
+
+  const handlePreview = async () => {
+    setLoadingPreview(true);
+    try {
+      const res = await fetch("http://localhost:5000/api/old-recording");
+      const data = await res.json();
+      if (data.url) {
+        setMode("preview");
+        setPreviewUrl(data.url);
       }
     } catch (err) {
-      console.error("Test failed:", err);
-      setTestResult({ success: false, message: "Request failed" });
+      console.error("Failed to load archive");
     } finally {
-      setTesting(false);
+      setLoadingPreview(false);
     }
   };
 
-  const quickPasswordTest = (password: string) => {
-    setTestPassword(password);
-    setTimeout(() => {
-      const btn = document.getElementById("test-btn") as HTMLButtonElement;
-      if (btn) btn.click();
-    }, 100);
-  };
-
-  if (loading) {
-    return <div style={{ padding: 20 }}>Loading...</div>;
-  }
-
   return (
-    <div style={{ padding: 20, fontFamily: "Arial, sans-serif" }}>
-      <h1>📹 CCTV Live Stream (1080p)</h1>
-
-      {/* Status Panel */}
-      <div
-        style={{
-          background: status?.recordingSize === 0 ? "#fff3cd" : "#d4edda",
-          padding: 15,
-          borderRadius: 8,
-          marginBottom: 20,
-          border: "1px solid #ddd",
-        }}
-      >
-        <h2>Backend Status</h2>
-        <p>
-          <strong>Status:</strong> {status?.status || "Unknown"}
-        </p>
-        <p>
-          <strong>RTSP URL:</strong> <code>{status?.rtspUrl}</code>
-        </p>
-        <p>
-          <strong>Recording Size:</strong> {status?.recordingSize} bytes
-        </p>
-        <p>
-          <strong>Stream File Exists:</strong>{" "}
-          {status?.m3u8Exists ? "✅ Yes" : "❌ No"}
-        </p>
-        <p style={{ color: status?.recordingSize === 0 ? "red" : "green" }}>
-          <strong>Message:</strong> {status?.message}
-        </p>
-      </div>
-
-      {/* Video Player */}
-      <div
-        style={{
-          background: "#000",
-          borderRadius: 8,
-          overflow: "hidden",
-          marginBottom: 20,
-        }}
-      >
-        <video
-          ref={videoRef}
-          controls
-          autoPlay
-          playsInline
-          muted
-          style={{ width: "100%", maxWidth: "900px", display: "block" }}
-        />
-      </div>
-
-      <div
-        style={{
-          background: "#e7f3ff",
-          padding: 10,
-          borderRadius: 8,
-          marginBottom: 20,
-        }}
-      >
-        <p>
-          <strong>📊 Stream URL:</strong> {streamUrl}
-        </p>
-        <p>
-          <strong>🔗 Status:</strong>{" "}
-          {status?.recordingSize > 1000
-            ? "✅ Streaming Active"
-            : "⚠️ Buffering..."}
-        </p>
-        <p style={{ fontSize: "12px", color: "#666" }}>
-          Open browser DevTools (F12) → Console tab to see detailed HLS
-          debugging info
-        </p>
-      </div>
-
-      {/* If not working, show password tester */}
-      {status?.recordingSize === 0 && (
-        <div
-          style={{
-            background: "#ffebee",
-            padding: 15,
-            borderRadius: 8,
-            marginBottom: 20,
-            border: "1px solid #f5c6cb",
-          }}
-        >
-          <h2>⚠️ Camera Not Connected</h2>
-          <p>
-            The backend is not receiving data from the camera. This usually
-            means the RTSP password is incorrect.
-          </p>
-
-          <h3>Try these passwords:</h3>
-          <div style={{ marginBottom: 15 }}>
-            {["cctv@123", "cctv123", "Cctv@123", "Cctv123"].map((pwd) => (
-              <button
-                key={pwd}
-                onClick={() => quickPasswordTest(pwd)}
-                style={{
-                  padding: "10px 15px",
-                  margin: "5px",
-                  cursor: "pointer",
-                  background: "#007bff",
-                  color: "white",
-                  border: "none",
-                  borderRadius: 4,
-                }}
-              >
-                Test: {pwd}
-              </button>
-            ))}
+    <div
+      ref={containerRef}
+      className="min-h-screen bg-[#0a0a0c] text-slate-200 font-sans selection:bg-blue-500/30"
+    >
+      {/* Top Navigation Bar */}
+      <nav className="border-b border-white/5 bg-black/20 backdrop-blur-md px-6 py-4 flex justify-between items-center">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-blue-600 rounded-lg">
+            <TbDeviceCctv size={20} className="text-white" />
           </div>
-
-          <div style={{ marginTop: 15 }}>
-            <h3>Or enter custom password:</h3>
-            <div>
-              <input
-                type="password"
-                value={testPassword}
-                onChange={(e) => setTestPassword(e.target.value)}
-                placeholder="Enter RTSP password"
-                style={{
-                  padding: "10px",
-                  width: "300px",
-                  fontSize: "16px",
-                  marginRight: "10px",
-                }}
-              />
-              <button
-                id="test-btn"
-                onClick={handleTestPassword}
-                disabled={testing}
-                style={{
-                  padding: "10px 20px",
-                  cursor: "pointer",
-                  background: testing ? "#ccc" : "#28a745",
-                  color: "white",
-                  border: "none",
-                  borderRadius: 4,
-                }}
-              >
-                {testing ? "Testing..." : "Test Password"}
-              </button>
-            </div>
-
-            {testResult && (
-              <div
-                style={{
-                  marginTop: 10,
-                  padding: 10,
-                  background: testResult.success ? "#d4edda" : "#f8d7da",
-                  borderRadius: 4,
-                  color: testResult.success ? "green" : "red",
-                }}
-              >
-                <strong>
-                  {testResult.success ? "✅ Success!" : "❌ Failed"}
-                </strong>
-                <p>{testResult.message}</p>
-                {testResult.hint && <p>{testResult.hint}</p>}
-              </div>
-            )}
+          <div>
+            <h1 className="text-sm font-bold uppercase tracking-widest text-white">
+              Cctv Monitor
+            </h1>
+            <p className="text-[10px] text-slate-500 font-mono">
+              NODE_TX_042 // SECURE_LINE
+            </p>
           </div>
         </div>
-      )}
 
-      <div style={{ fontSize: "12px", color: "#666", marginTop: 20 }}>
-        <p>
-          <strong>Troubleshooting:</strong>
+        <div className="flex items-center gap-6">
+          <div className="hidden md:flex flex-col items-end font-mono">
+            <span className="text-sm font-bold text-slate-300">
+              {currentTime.toLocaleTimeString([], { hour12: false })}
+            </span>
+            <span className="text-[10px] text-slate-500">
+              {currentTime.toLocaleDateString(undefined, {
+                weekday: "short",
+                day: "2-digit",
+                month: "short",
+              })}
+            </span>
+          </div>
+          <Settings
+            size={18}
+            className="text-slate-500 hover:text-white cursor-pointer transition"
+          />
+        </div>
+      </nav>
+
+      <main className="max-w-[1600px] mx-auto p-4 md:p-8">
+        <div className="relative group">
+          {/* Video Container */}
+          <div className="relative aspect-video bg-black rounded-2xl overflow-hidden border border-white/10 shadow-[0_0_50px_-12px_rgba(0,0,0,0.5)]">
+            <video
+              ref={videoRef}
+              className="w-full h-full object-cover"
+              autoPlay
+              muted={isMuted}
+              playsInline
+            />
+
+            {/* Scanning Overlay (Aesthetic) */}
+            <div className="absolute inset-0 pointer-events-none opacity-10 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[length:100%_4px,3px_100%]" />
+
+            {/* Top UI Overlays */}
+            <div className="absolute top-6 right-6 flex flex-col gap-2">
+              <div
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-md backdrop-blur-md border ${
+                  mode === "live"
+                    ? "bg-red-500/10 border-red-500/50 text-red-500"
+                    : "bg-blue-500/10 border-blue-500/50 text-blue-500"
+                }`}
+              >
+                <Circle
+                  size={8}
+                  fill="currentColor"
+                  className={mode === "live" ? "animate-pulse" : ""}
+                />
+                <span className="text-xs font-black tracking-widest">
+                  {mode === "live" ? "LIVE FEED" : "ARCHIVE"}
+                </span>
+              </div>
+            </div>
+
+            {/* Bottom Controls Overlay */}
+            <div className="absolute bottom-0 inset-x-0 p-6 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <button
+                    onClick={() => setIsMuted(!isMuted)}
+                    className="cursor-pointer p-2.5 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md transition"
+                  >
+                    {isMuted ? <VolumeX size={18} /> : <Volume2 size={18} />}
+                  </button>
+                  <div className="flex flex-col">
+                    <span className="text-xs font-bold">PRIMARY_CAM_01</span>
+                    {/* <span className="text-[10px] text-slate-400 font-mono">
+                      192.168.1.104
+                    </span> */}
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={toggleFullscreen}
+                    className="cursor-pointer p-2.5 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md transition"
+                  >
+                    <Maximize size={18} />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Action Dock */}
+          <div className="mt-8 flex justify-center">
+            <div className="bg-white/5 border border-white/10 p-1.5 rounded-2xl flex gap-1 backdrop-blur-xl">
+              <button
+                onClick={() => setMode("live")}
+                className={`cursor-pointer flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold transition-all ${
+                  mode === "live"
+                    ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20"
+                    : "hover:bg-white/5 text-slate-400"
+                }`}
+              >
+                <Activity size={18} />
+                Live Monitor
+              </button>
+
+              <button
+                onClick={handlePreview}
+                disabled={loadingPreview}
+                className={`cursor-pointer flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold transition-all ${
+                  mode === "preview"
+                    ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20"
+                    : "hover:bg-white/5 text-slate-400"
+                } ${loadingPreview && "opacity-50 cursor-wait"}`}
+              >
+                <History size={18} />
+                {loadingPreview ? "Accessing..." : "View Archive"}
+              </button>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <footer className="fixed bottom-2 w-full text-center pointer-events-none">
+        <p className="text-[10px] uppercase tracking-[0.1em] text-slate-600 font-bold">
+          System Status: <span className="text-emerald-500">Nominal</span>
         </p>
-        <ul>
-          <li>Make sure backend is running: npm start</li>
-          <li>Check camera IP: 192.168.0.100:5543</li>
-          <li>Default username: admin</li>
-          <li>If nothing works, restart the camera and backend</li>
-        </ul>
-      </div>
+      </footer>
     </div>
   );
 }
