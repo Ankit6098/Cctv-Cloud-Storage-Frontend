@@ -15,6 +15,8 @@ export default function Home() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamUrl = "http://localhost:5000/stream/index.m3u8";
 
+  console.log("🚀 Page component rendered, initializing stream...");
+
   const [status, setStatus] = useState<Status | null>(null);
   const [loading, setLoading] = useState(true);
   const [testPassword, setTestPassword] = useState("");
@@ -43,78 +45,89 @@ export default function Home() {
 
   // Setup HLS stream
   useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
+    console.log("🎬 HLS useEffect started");
 
     let hls: Hls | null = null;
+    let retryAttempts = 0;
+    const maxRetries = 5;
 
     const attachStream = () => {
-      console.log("Attempting to attach stream to video player...");
+      const video = videoRef.current;
+      console.log("📺 Video element on attempt", retryAttempts + 1, ":", video);
 
-      if (Hls.isSupported()) {
-        console.log("HLS.js is supported, initializing...");
+      if (!video) {
+        if (retryAttempts < maxRetries) {
+          retryAttempts++;
+          console.log(
+            `⏱️ Video not ready, retrying in 200ms (attempt ${retryAttempts}/${maxRetries})...`,
+          );
+          setTimeout(attachStream, 200);
+        } else {
+          console.error("❌ Video element still not found after retries!");
+        }
+        return;
+      }
+
+      console.log("✅ Video element found!");
+      console.log("📍 Stream URL:", "http://localhost:5000/stream/index.m3u8");
+
+      if (!Hls.isSupported()) {
+        console.log("🍎 HLS.js not supported, checking native support...");
+        if (video.canPlayType("application/vnd.apple.mpegurl")) {
+          console.log("🍎 Using native HLS (Safari/iOS)");
+          video.src = "http://localhost:5000/stream/index.m3u8";
+          video.play().catch((e) => console.error("Play error:", e));
+        } else {
+          console.error("❌ HLS not supported in this browser");
+        }
+        return;
+      }
+
+      console.log("✅ HLS.js supported, initializing...");
+      try {
         hls = new Hls({
           maxBufferLength: 10,
           maxMaxBufferLength: 30,
-          startLevel: -1, // Auto select quality
-          defaultAudioCodec: undefined,
+          startLevel: -1,
           enableWorker: true,
           lowLatencyMode: true,
+          manifestLoadingTimeOut: 10000,
+          fragLoadingTimeOut: 20000,
         });
 
         hls.attachMedia(video);
-        console.log("HLS.js attached to video element");
+        console.log("✅ HLS attached to video");
 
         hls.on(Hls.Events.MEDIA_ATTACHED, () => {
-          console.log("Media attached, loading source:", streamUrl);
-          hls?.loadSource(streamUrl);
+          console.log("📡 Media attached, loading source...");
+          hls?.loadSource("http://localhost:5000/stream/index.m3u8");
         });
 
         hls.on(Hls.Events.MANIFEST_PARSED, () => {
-          console.log("Manifest parsed, playing...");
-          video.play().catch((err) => {
-            console.error("Autoplay failed:", err);
-          });
+          console.log("✅ Manifest parsed! Starting playback...");
+          video.play().catch((e) => console.error("Play error:", e));
         });
 
         hls.on(Hls.Events.ERROR, (event, data) => {
-          console.error("HLS.js error event:", event, "data:", data);
-          if (data.type === "networkError") {
-            console.error("Network error, retrying...");
-            if (data.response?.code === 404) {
-              console.error("404 Not found - check if m3u8 URL is correct");
-            }
-          }
+          console.error("❌ HLS Error:", data.type, data.details);
           if (data.fatal) {
-            console.error("Fatal HLS error:", data.type);
+            console.error("💥 Fatal error occurred");
           }
         });
-
-        hls.on(Hls.Events.FRAG_LOADED, (event, data) => {
-          console.log("Fragment loaded:", data.frag.name);
-        });
-      } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
-        console.log("Using native HLS support (Safari/iOS)");
-        video.src = streamUrl;
-        video.play().catch((err) => {
-          console.error("Native playback failed:", err);
-        });
-      } else {
-        console.error("HLS playback is not supported in this browser.");
+      } catch (e) {
+        console.error("❌ HLS initialization error:", e);
       }
     };
 
-    // Wait a bit for DOM to be ready
-    const timer = setTimeout(() => {
-      attachStream();
-    }, 100);
+    // Start attaching stream with initial delay
+    console.log("⏱️ Starting stream attachment in 100ms...");
+    const timer = setTimeout(attachStream, 100);
 
     return () => {
       clearTimeout(timer);
       if (hls) {
-        console.log("Cleaning up HLS.js");
+        console.log("🧹 Destroying HLS");
         hls.destroy();
-        hls = null;
       }
     };
   }, []);
