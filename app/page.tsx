@@ -201,7 +201,7 @@ export default function Home() {
           </div>
 
           {/* Action Dock */}
-          <div className="mt-8 flex justify-center">
+          <div className="mt-4 flex justify-center">
             <div className="bg-white/5 border border-white/10 p-1.5 rounded-2xl flex gap-1 backdrop-blur-xl">
               <button
                 onClick={() => setMode("live")}
@@ -233,7 +233,7 @@ export default function Home() {
       </main>
 
       <footer className="fixed bottom-2 w-full text-center pointer-events-none">
-        <p className="text-[10px] uppercase tracking-[0.1em] text-slate-600 font-bold">
+        <p className="text-[10px] uppercase tracking-[0.1em] text-slate-600 font-bold bg-black/20 backdrop-blur-md inline-block px-3 py-1 rounded-full">
           System Status: <span className="text-emerald-500">Nominal</span>
         </p>
       </footer>
