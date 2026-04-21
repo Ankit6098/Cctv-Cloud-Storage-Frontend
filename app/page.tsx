@@ -637,12 +637,19 @@ export default function Home() {
             <div className="flex-1 overflow-y-auto">
               {loadingArchives ? (
                 <div className="flex items-center justify-center h-64">
-                  <div className="animate-spin">
-                    <Circle
-                      size={40}
-                      className="text-blue-500"
-                      fill="rgba(59, 130, 246, 0.2)"
-                    />
+                  <div className="relative w-10 h-10">
+                    {/* Outer rotating ring */}
+                    <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-blue-500 border-r-blue-400 animate-spin"></div>
+                    {/* Middle rotating ring (slower) */}
+                    <div
+                      className="absolute inset-1 rounded-full border-4 border-transparent border-b-blue-400 border-l-blue-500 animate-spin"
+                      style={{
+                        animationDirection: "reverse",
+                        animationDuration: "1.5s",
+                      }}
+                    ></div>
+                    {/* Center pulsing dot */}
+                    <div className="absolute inset-6 rounded-full bg-blue-500 animate-pulse"></div>
                   </div>
                 </div>
               ) : archives.length === 0 ? (
