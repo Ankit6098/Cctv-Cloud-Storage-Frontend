@@ -21,12 +21,14 @@ import {
   Moon,
   Sun,
 } from "lucide-react";
-import { TbDeviceCctv } from "react-icons/tb";import {
+import { TbDeviceCctv } from "react-icons/tb";
+import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
 
 interface ArchiveFile {
   id: string;
@@ -57,11 +59,11 @@ export default function Home() {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedFileId, setSelectedFileId] = useState<string | null>(null);
   const [isDarkTheme, setIsDarkTheme] = useState(true);
-  const [showThemeMenu, setShowThemeMenu] = useState(false);
   const [isLoadingVideo, setIsLoadingVideo] = useState(false);
   const [videoDuration, setVideoDuration] = useState(0);
   const [videoCurrentTime, setVideoCurrentTime] = useState(0);
   const [isSeeking, setIsSeeking] = useState(false);
+  const [is24HourFormat, setIs24HourFormat] = useState(false);
 
   // Clock Logic
   useEffect(() => {
@@ -292,10 +294,12 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-4">
           <div className="hidden md:flex flex-col items-end font-mono">
-            <span className="text-sm font-bold">
-              {currentTime.toLocaleTimeString([], { hour12: false })}
+            <span className="text-sm font-bold uppercase">
+              {currentTime.toLocaleTimeString([], {
+                hour12: is24HourFormat ? undefined : true,
+              })}
             </span>
             <span
               className={`text-[10px] ${
@@ -309,59 +313,69 @@ export default function Home() {
               })}
             </span>
           </div>
-
+          {/* Time Format Toggle */}
+          <Button
+            className={`cursor-pointer text-xs ${isDarkTheme ? "bg-white/10 hover:bg-white/20 text-slate-500 hover:text-white" : "bg-slate-300 hover:bg-slate-400 text-slate-700 hover:text-slate-900"}`}
+            onClick={() => setIs24HourFormat(!is24HourFormat)}
+          >
+            {is24HourFormat ? "24Hr" : "12Hr"}
+          </Button>
           {/* Settings Menu */}
-          
           <div className="relative">
-  <DropdownMenu>
-    <DropdownMenuTrigger asChild>
-      <button
-        className={`cursor-pointer p-2 rounded-lg transition ${
-          isDarkTheme
-            ? "hover:bg-white/10 text-slate-500 hover:text-white"
-            : "hover:bg-slate-300 text-slate-700"
-        }`}
-      >
-        <Settings size={18} />
-      </button>
-    </DropdownMenuTrigger>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  className={`cursor-pointer p-2 rounded-lg transition ${
+                    isDarkTheme
+                      ? "hover:bg-white/10 text-slate-500 hover:text-white"
+                      : "hover:bg-slate-300 text-slate-700"
+                  }`}
+                >
+                  <Settings size={18} />
+                </button>
+              </DropdownMenuTrigger>
 
-    <DropdownMenuContent
-      align="end"
-      className={`w-[150px] p-1 ${
-        isDarkTheme
-          ? "bg-slate-900 border-white/10 text-white"
-          : "bg-white border-slate-300 text-slate-900"
-      }`}
-    >
-      <DropdownMenuItem
-        onClick={() => setIsDarkTheme(true)}
-        className={`p-2 mb-1 text-xs flex items-center gap-2 cursor-pointer ${
-          isDarkTheme ? "bg-blue-600 text-white " : "hover:bg-slate-200"
-        }`}
-      >
-        <Moon size={14} />
-        Dark Theme
-      </DropdownMenuItem>
+              <DropdownMenuContent
+                align="end"
+                className={`w-[150px] p-1 ${
+                  isDarkTheme
+                    ? "bg-slate-900 border-white/10 text-white"
+                    : "bg-white border-slate-300 text-slate-900"
+                }`}
+              >
+                <DropdownMenuItem
+                  onClick={() => setIsDarkTheme(true)}
+                  className={`p-2 mb-1 text-xs flex items-center gap-2 cursor-pointer ${
+                    isDarkTheme
+                      ? "bg-blue-600 text-white "
+                      : "hover:bg-slate-200"
+                  }`}
+                >
+                  <Moon size={14} />
+                  Dark Theme
+                </DropdownMenuItem>
 
-      <DropdownMenuItem
-        onClick={() => setIsDarkTheme(false)}
-        className={`p-2 text-xs flex items-center gap-2 cursor-pointer hover:bg-slate-800 ${
-          !isDarkTheme ? "bg-blue-500 text-white hover:bg-blue-500" : ""
-        }`}
-      >
-        <Sun size={14} />
-        Light Theme
-      </DropdownMenuItem>
-    </DropdownMenuContent>
-  </DropdownMenu>
-</div>
+                <DropdownMenuItem
+                  onClick={() => setIsDarkTheme(false)}
+                  className={`p-2 text-xs flex items-center gap-2 cursor-pointer hover:bg-slate-800 ${
+                    !isDarkTheme
+                      ? "bg-blue-500 text-white hover:bg-blue-500"
+                      : ""
+                  }`}
+                >
+                  <Sun size={14} />
+                  Light Theme
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
       </nav>
 
       <main className="max-w-[1600px] mx-auto p-4 md:p-8">
         <div className="relative group">
           {/* Video Container */}
+
           <div
             className={`relative aspect-video rounded-2xl overflow-hidden border  ${
               isDarkTheme
