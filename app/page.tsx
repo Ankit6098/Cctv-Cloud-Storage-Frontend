@@ -21,7 +21,12 @@ import {
   Moon,
   Sun,
 } from "lucide-react";
-import { TbDeviceCctv } from "react-icons/tb";
+import { TbDeviceCctv } from "react-icons/tb";import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
 
 interface ArchiveFile {
   id: string;
@@ -306,57 +311,51 @@ export default function Home() {
           </div>
 
           {/* Settings Menu */}
+          
           <div className="relative">
-            <button
-              onClick={() => setShowThemeMenu(!showThemeMenu)}
-              className={`p-2 rounded-lg transition ${
-                isDarkTheme
-                  ? "hover:bg-white/10 text-slate-500 hover:text-white"
-                  : "hover:bg-slate-300 text-slate-700"
-              }`}
-            >
-              <Settings size={18} />
-            </button>
+  <DropdownMenu>
+    <DropdownMenuTrigger asChild>
+      <button
+        className={`cursor-pointer p-2 rounded-lg transition ${
+          isDarkTheme
+            ? "hover:bg-white/10 text-slate-500 hover:text-white"
+            : "hover:bg-slate-300 text-slate-700"
+        }`}
+      >
+        <Settings size={18} />
+      </button>
+    </DropdownMenuTrigger>
 
-            {showThemeMenu && (
-              <div
-                className={`absolute w-[150px] right-0 mt-2 rounded-lg border shadow-lg z-40 overflow-hidden ${
-                  isDarkTheme
-                    ? "bg-slate-900 border-white/10"
-                    : "bg-white border-slate-300"
-                }`}
-              >
-                <button
-                  onClick={() => {
-                    setIsDarkTheme(true);
-                    setShowThemeMenu(false);
-                  }}
-                  className={`w-full text-xs px-4 py-2 flex items-center gap-2 transition ${
-                    isDarkTheme
-                      ? "bg-blue-600 text-white"
-                      : "hover:bg-slate-100 text-slate-900"
-                  }`}
-                >
-                  <Moon size={14} />
-                  Dark Theme
-                </button>
-                <button
-                  onClick={() => {
-                    setIsDarkTheme(false);
-                    setShowThemeMenu(false);
-                  }}
-                  className={`w-full text-xs px-4 py-2 flex items-center gap-2 transition ${
-                    !isDarkTheme
-                      ? "bg-blue-500 text-white"
-                      : "hover:bg-slate-700 text-slate-300"
-                  }`}
-                >
-                  <Sun size={14} />
-                  Light Theme
-                </button>
-              </div>
-            )}
-          </div>
+    <DropdownMenuContent
+      align="end"
+      className={`w-[150px] p-1 ${
+        isDarkTheme
+          ? "bg-slate-900 border-white/10 text-white"
+          : "bg-white border-slate-300 text-slate-900"
+      }`}
+    >
+      <DropdownMenuItem
+        onClick={() => setIsDarkTheme(true)}
+        className={`p-2 mb-1 text-xs flex items-center gap-2 cursor-pointer ${
+          isDarkTheme ? "bg-blue-600 text-white " : "hover:bg-slate-200"
+        }`}
+      >
+        <Moon size={14} />
+        Dark Theme
+      </DropdownMenuItem>
+
+      <DropdownMenuItem
+        onClick={() => setIsDarkTheme(false)}
+        className={`p-2 text-xs flex items-center gap-2 cursor-pointer hover:bg-slate-800 ${
+          !isDarkTheme ? "bg-blue-500 text-white hover:bg-blue-500" : ""
+        }`}
+      >
+        <Sun size={14} />
+        Light Theme
+      </DropdownMenuItem>
+    </DropdownMenuContent>
+  </DropdownMenu>
+</div>
         </div>
       </nav>
 
