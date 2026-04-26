@@ -43,11 +43,25 @@ interface ArchiveDay {
   files: ArchiveFile[];
 }
 
+interface TimelineRecording {
+  id: string;
+  name: string;
+  size: number;
+  sizeFormatted: string;
+  createdAt: string;
+  createdAtTime: number;
+  url: string;
+  source: "local" | "drive";
+  fileId?: string;
+}
+
 export default function Home() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
-  const [mode, setMode] = useState<"live" | "preview" | "archive">("live");
+  const [mode, setMode] = useState<"live" | "preview" | "archive" | "timeline">(
+    "live",
+  );
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [loadingPreview, setLoadingPreview] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -64,6 +78,15 @@ export default function Home() {
   const [videoCurrentTime, setVideoCurrentTime] = useState(0);
   const [isSeeking, setIsSeeking] = useState(false);
   const [is24HourFormat, setIs24HourFormat] = useState(false);
+
+  // Timeline state
+  const [timelineRecordings, setTimelineRecordings] = useState<
+    TimelineRecording[]
+  >([]);
+  const [loadingTimeline, setLoadingTimeline] = useState(false);
+  const [currentRecordingIndex, setCurrentRecordingIndex] = useState(0);
+  const [timelineStartTime, setTimelineStartTime] = useState<number>(0);
+  const [timelineEndTime, setTimelineEndTime] = useState<number>(0);
 
   // Clock Logic
   useEffect(() => {
@@ -124,6 +147,32 @@ export default function Home() {
 
       video.addEventListener("canplay", handleCanPlay);
       return () => video.removeEventListener("canplay", handleCanPlay);
+    } else if (mode === "timeline" && timelineRecordings.length > 0) {
+      // Timeline mode - play current recording from the timeline
+      setIsLoadingVideo(true);
+      const currentRecording = timelineRecordings[currentRecordingIndex];
+
+      if (currentRecording) {
+        // Build the URL based on source (local or Google Drive)
+        let videoUrl = currentRecording.url;
+
+        // If it's from Google Drive, ensure it's the stream-archive URL
+        if (currentRecording.source === "drive" && currentRecording.fileId) {
+          videoUrl = `http://localhost:5000/api/stream-archive/${currentRecording.fileId}`;
+        } else if (currentRecording.source === "local") {
+          videoUrl = `http://localhost:5000${currentRecording.url}`;
+        }
+
+        video.src = videoUrl;
+
+        const handleCanPlay = () => {
+          setIsLoadingVideo(false);
+          video.play().catch(() => {});
+        };
+
+        video.addEventListener("canplay", handleCanPlay);
+        return () => video.removeEventListener("canplay", handleCanPlay);
+      }
     } else if (mode === "archive" && selectedFileId) {
       // Stream archive from Google Drive
       setIsLoadingVideo(true);
@@ -140,7 +189,15 @@ export default function Home() {
     }
 
     return () => hls?.destroy();
-  }, [mode, previewUrl, selectedFileId]);
+  }, [
+    mode,
+    previewUrl,
+    selectedFileId,
+    timelineRecordings,
+    timelineStartTime,
+    timelineEndTime,
+    currentRecordingIndex,
+  ]);
 
   // Update video time and duration
   useEffect(() => {
@@ -179,16 +236,37 @@ export default function Home() {
   const handlePreview = async () => {
     setLoadingPreview(true);
     try {
-      const res = await fetch("http://localhost:5000/api/old-recording");
-      const data = await res.json();
-      if (data.url) {
-        setMode("preview");
-        setPreviewUrl(data.url);
-      }
+      // Load timeline recordings instead of single preview
+      await loadTimeline();
     } catch (err) {
-      console.error("Failed to load preview");
+      console.error("Failed to load timeline");
     } finally {
       setLoadingPreview(false);
+    }
+  };
+
+  const loadTimeline = async () => {
+    setLoadingTimeline(true);
+    try {
+      const res = await fetch("http://localhost:5000/api/timeline/recordings");
+      const data = await res.json();
+      if (data.success && data.recordings && data.recordings.length > 0) {
+        setTimelineRecordings(data.recordings);
+        setCurrentRecordingIndex(0);
+
+        // Set timeline start and end times
+        const firstRecording = data.recordings[0];
+        const lastRecording = data.recordings[data.recordings.length - 1];
+
+        setTimelineStartTime(firstRecording.createdAtTime);
+        setTimelineEndTime(lastRecording.createdAtTime + 3600000); // Add 1 hour buffer for last video
+
+        setMode("timeline");
+      }
+    } catch (err) {
+      console.error("Failed to load timeline:", err);
+    } finally {
+      setLoadingTimeline(false);
     }
   };
 
@@ -318,7 +396,7 @@ export default function Home() {
             className={`cursor-pointer text-xs ${isDarkTheme ? "bg-white/10 hover:bg-white/20 text-slate-500 hover:text-white" : "bg-slate-300 hover:bg-slate-400 text-slate-700 hover:text-slate-900"}`}
             onClick={() => setIs24HourFormat(!is24HourFormat)}
           >
-            {is24HourFormat ? "24Hr" : "12Hr"}
+            {is24HourFormat ? "12Hr" : "24Hr"}
           </Button>
           {/* Settings Menu */}
           <div className="relative">
@@ -421,7 +499,7 @@ export default function Home() {
             <div className="absolute inset-0 pointer-events-none opacity-10 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[length:100%_4px,3px_100%]" />
 
             {/* Top UI Overlays */}
-            <div className="absolute top-6 right-6 flex flex-col gap-2">
+            <div className="absolute top-4 right-4 flex flex-col gap-2">
               <div
                 className={`flex items-center gap-2 px-3 py-1.5 rounded-md backdrop-blur-md border ${
                   mode === "live"
@@ -447,7 +525,9 @@ export default function Home() {
             {/* Custom Controls Overlay */}
             <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
               {/* Progress Bar */}
-              {mode !== "live" && (
+              {(mode === "preview" ||
+                mode === "archive" ||
+                mode === "timeline") && (
                 <div className="px-6 pt-6 pb-3 group/bar">
                   <div className="flex items-center gap-3">
                     <div className="flex-1 relative">
@@ -568,19 +648,21 @@ export default function Home() {
 
               <button
                 onClick={handlePreview}
-                disabled={loadingPreview}
+                disabled={loadingPreview || loadingTimeline}
                 className={`cursor-pointer flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold transition-all ${
-                  mode === "preview"
+                  mode === "timeline"
                     ? isDarkTheme
                       ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20"
                       : "bg-blue-500 text-white shadow-lg shadow-blue-500/20"
                     : isDarkTheme
                       ? "hover:bg-white/5 text-slate-400"
                       : "hover:bg-slate-300 text-slate-700"
-                } ${loadingPreview && "opacity-50 cursor-wait"}`}
+                } ${(loadingPreview || loadingTimeline) && "opacity-50 cursor-wait"}`}
               >
                 <Play size={18} />
-                {loadingPreview ? "Accessing..." : "Recent"}
+                {loadingPreview || loadingTimeline
+                  ? "Loading..."
+                  : "Recent (Timeline)"}
               </button>
 
               <button
@@ -600,6 +682,190 @@ export default function Home() {
               </button>
             </div>
           </div>
+
+          {/* Timeline Scrubber */}
+          {mode === "timeline" && timelineRecordings.length > 0 && (
+            <div
+              className={`mt-6 p-6 rounded-2xl border ${
+                isDarkTheme
+                  ? "bg-slate-900/50 border-white/10"
+                  : "bg-slate-200/50 border-slate-300"
+              }`}
+            >
+              <h3
+                className={`text-sm font-bold mb-4 flex items-center gap-2 ${
+                  isDarkTheme ? "text-white" : "text-slate-900"
+                }`}
+              >
+                <Clock size={18} />
+                Timeline Scrubber - {timelineRecordings.length} segment
+                {timelineRecordings.length !== 1 ? "s" : ""}
+              </h3>
+
+              {/* Timeline segments visualization */}
+              <div className="space-y-4">
+                {/* Timeline bar with all segments */}
+                <div className="flex items-center gap-3">
+                  <div className="flex-1">
+                    <div
+                      className={`h-12 rounded-lg overflow-hidden border flex ${
+                        isDarkTheme
+                          ? "bg-slate-800 border-white/10"
+                          : "bg-slate-300 border-slate-400"
+                      }`}
+                    >
+                      {timelineRecordings.map((recording, index) => (
+                        <button
+                          key={recording.id}
+                          onClick={() => {
+                            setCurrentRecordingIndex(index);
+                            // The useEffect will handle loading the video with the correct URL
+                          }}
+                          className={`flex-1 transition-all hover:opacity-100 relative group ${
+                            currentRecordingIndex === index
+                              ? isDarkTheme
+                                ? "bg-blue-600 opacity-100"
+                                : "bg-blue-500 opacity-100"
+                              : isDarkTheme
+                                ? "bg-slate-700 opacity-60 hover:opacity-80"
+                                : "bg-slate-400 opacity-60 hover:opacity-80"
+                          }`}
+                          title={`${new Date(recording.createdAt).toLocaleString()}\n${recording.sizeFormatted}\nSource: ${recording.source}`}
+                        >
+                          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <span
+                              className={`text-xs font-bold ${
+                                isDarkTheme ? "text-white" : "text-white"
+                              }`}
+                            >
+                              {index + 1}
+                            </span>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div
+                    className={`text-xs font-mono whitespace-nowrap ${
+                      isDarkTheme ? "text-slate-400" : "text-slate-600"
+                    }`}
+                  >
+                    {timelineRecordings.length}
+                  </div>
+                </div>
+
+                {/* Current recording info */}
+                {timelineRecordings[currentRecordingIndex] && (
+                  <div
+                    className={`p-3 rounded-lg border ${
+                      isDarkTheme
+                        ? "bg-slate-800/50 border-white/5"
+                        : "bg-slate-300/50 border-slate-400"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p
+                          className={`text-xs font-bold ${
+                            isDarkTheme ? "text-blue-400" : "text-blue-600"
+                          }`}
+                        >
+                          Now Playing: Segment {currentRecordingIndex + 1} of{" "}
+                          {timelineRecordings.length}
+                        </p>
+                        <p
+                          className={`text-xs mt-1 ${
+                            isDarkTheme ? "text-slate-400" : "text-slate-600"
+                          }`}
+                        >
+                          {new Date(
+                            timelineRecordings[currentRecordingIndex].createdAt,
+                          ).toLocaleString()}
+                        </p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <p
+                            className={`text-xs ${
+                              isDarkTheme ? "text-slate-500" : "text-slate-700"
+                            }`}
+                          >
+                            {
+                              timelineRecordings[currentRecordingIndex]
+                                .sizeFormatted
+                            }
+                          </p>
+                          <span
+                            className={`inline-block px-2 py-0.5 text-xs font-semibold rounded ${
+                              timelineRecordings[currentRecordingIndex]
+                                .source === "drive"
+                                ? isDarkTheme
+                                  ? "bg-purple-600/30 text-purple-300"
+                                  : "bg-purple-200 text-purple-800"
+                                : isDarkTheme
+                                  ? "bg-green-600/30 text-green-300"
+                                  : "bg-green-200 text-green-800"
+                            }`}
+                          >
+                            {timelineRecordings[currentRecordingIndex]
+                              .source === "drive"
+                              ? "📁 Google Drive"
+                              : "💾 Local"}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          disabled={currentRecordingIndex === 0}
+                          onClick={() => {
+                            const newIndex = Math.max(
+                              0,
+                              currentRecordingIndex - 1,
+                            );
+                            setCurrentRecordingIndex(newIndex);
+                          }}
+                          className={`p-2 rounded transition ${
+                            currentRecordingIndex === 0
+                              ? isDarkTheme
+                                ? "bg-slate-700 text-slate-500 cursor-not-allowed"
+                                : "bg-slate-400 text-slate-600 cursor-not-allowed"
+                              : isDarkTheme
+                                ? "bg-white/10 hover:bg-white/20 text-white"
+                                : "hover:bg-slate-400 text-slate-900"
+                          }`}
+                        >
+                          <ChevronLeft size={16} />
+                        </button>
+                        <button
+                          disabled={
+                            currentRecordingIndex ===
+                            timelineRecordings.length - 1
+                          }
+                          onClick={() => {
+                            const newIndex = Math.min(
+                              timelineRecordings.length - 1,
+                              currentRecordingIndex + 1,
+                            );
+                            setCurrentRecordingIndex(newIndex);
+                          }}
+                          className={`p-2 rounded transition ${
+                            currentRecordingIndex ===
+                            timelineRecordings.length - 1
+                              ? isDarkTheme
+                                ? "bg-slate-700 text-slate-500 cursor-not-allowed"
+                                : "bg-slate-400 text-slate-600 cursor-not-allowed"
+                              : isDarkTheme
+                                ? "bg-white/10 hover:bg-white/20 text-white"
+                                : "hover:bg-slate-400 text-slate-900"
+                          }`}
+                        >
+                          <ChevronLeft size={16} className="rotate-180" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </main>
 
