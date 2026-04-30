@@ -454,172 +454,505 @@ export default function Home() {
         <div className="relative group">
           {/* Video Container */}
 
-          <div
-            className={`relative aspect-video rounded-2xl overflow-hidden border  ${
-              isDarkTheme
-                ? "bg-black border-white/10"
-                : "bg-slate-200 border-slate-300"
-            }`}
-          >
-            <video
-              ref={videoRef}
-              className="w-full h-full object-cover"
-              autoPlay
-              muted={isMuted}
-              playsInline
-            />
-
-            {/* Loading Overlay (Single) */}
-            {isLoadingVideo && (
-              <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-10">
-                <div className="flex flex-col items-center gap-4">
-                  {/* Modern Animated Loader */}
-                  <div className="relative w-16 h-16">
-                    {/* Outer rotating ring */}
-                    <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-blue-500 border-r-blue-400 animate-spin"></div>
-                    {/* Middle rotating ring (slower) */}
-                    <div
-                      className="absolute inset-1 rounded-full border-4 border-transparent border-b-blue-400 border-l-blue-500 animate-spin"
-                      style={{
-                        animationDirection: "reverse",
-                        animationDuration: "1.5s",
-                      }}
-                    ></div>
-                    {/* Center pulsing dot */}
-                    <div className="absolute inset-6 rounded-full bg-blue-500 animate-pulse"></div>
-                  </div>
-                  <p className="text-white text-sm font-semibold animate-pulse">
-                    Loading footage...
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {/* Scanning Overlay (Aesthetic) */}
-            <div className="absolute inset-0 pointer-events-none opacity-10 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[length:100%_4px,3px_100%]" />
-
-            {/* Top UI Overlays */}
-            <div className="absolute top-4 right-4 flex flex-col gap-2">
+          {mode === "archive" ? (
+            <div className="flex gap-4 w-full">
               <div
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-md backdrop-blur-md border ${
-                  mode === "live"
-                    ? "bg-red-500/10 border-red-500/50 text-red-500"
-                    : "bg-blue-500/10 border-blue-500/50 text-blue-500"
+                className={`w-[70%] h-[60vh] relative aspect-video rounded-2xl overflow-hidden border ${
+                  isDarkTheme
+                    ? "bg-black border-white/10"
+                    : "bg-slate-200 border-slate-300"
                 }`}
               >
-                <Circle
-                  size={8}
-                  fill="currentColor"
-                  className={mode === "live" ? "animate-pulse" : ""}
+                <video
+                  ref={videoRef}
+                  className="w-full h-full object-cover"
+                  autoPlay
+                  muted={isMuted}
+                  playsInline
                 />
-                <span className="text-xs font-black tracking-widest">
-                  {mode === "live"
-                    ? "LIVE FEED"
-                    : mode === "archive"
-                      ? "ARCHIVE"
-                      : "PREVIEW"}
-                </span>
+
+                {/* Loading Overlay (Single) */}
+                {isLoadingVideo && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-10">
+                    <div className="flex flex-col items-center gap-4">
+                      {/* Modern Animated Loader */}
+                      <div className="relative w-16 h-16">
+                        {/* Outer rotating ring */}
+                        <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-blue-500 border-r-blue-400 animate-spin"></div>
+                        {/* Middle rotating ring (slower) */}
+                        <div
+                          className="absolute inset-1 rounded-full border-4 border-transparent border-b-blue-400 border-l-blue-500 animate-spin"
+                          style={{
+                            animationDirection: "reverse",
+                            animationDuration: "1.5s",
+                          }}
+                        ></div>
+                        {/* Center pulsing dot */}
+                        <div className="absolute inset-6 rounded-full bg-blue-500 animate-pulse"></div>
+                      </div>
+                      <p className="text-white text-sm font-semibold animate-pulse">
+                        Loading footage...
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Scanning Overlay (Aesthetic) */}
+                <div className="absolute inset-0 pointer-events-none opacity-10 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[length:100%_4px,3px_100%]" />
+
+                {/* Top UI Overlays */}
+                <div className="absolute top-4 right-4 flex flex-col gap-2">
+                  <div
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-md backdrop-blur-md border bg-blue-500/10 border-blue-500/50 text-blue-500 
+                     
+                    `}
+                  >
+                    <Circle size={8} fill="currentColor" />
+                    <span className="text-xs font-black tracking-widest">
+                      ARCHIVE
+                    </span>
+                  </div>
+                </div>
+
+                {/* Custom Controls Overlay */}
+                <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  {/* Progress Bar */}
+
+                  <div className="px-6 pt-6 pb-3 group/bar">
+                    <div className="flex items-center gap-3">
+                      <div className="flex-1 relative">
+                        <input
+                          type="range"
+                          min="0"
+                          max={videoDuration || 0}
+                          value={videoCurrentTime}
+                          onChange={handleSeek}
+                          onMouseDown={() => setIsSeeking(true)}
+                          onMouseUp={() => setIsSeeking(false)}
+                          onTouchStart={() => setIsSeeking(true)}
+                          onTouchEnd={() => setIsSeeking(false)}
+                          className="w-full h-1 bg-white/20 rounded-lg appearance-none cursor-pointer transition-all duration-150 hover:h-2 group-hover/bar:h-2"
+                          style={{
+                            background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${
+                              videoDuration
+                                ? (videoCurrentTime / videoDuration) * 100
+                                : 0
+                            }%, rgba(255,255,255,0.2) ${
+                              videoDuration
+                                ? (videoCurrentTime / videoDuration) * 100
+                                : 0
+                            }%, rgba(255,255,255,0.2) 100%)`,
+                          }}
+                        />
+                        {/* Animated progress glow */}
+                        <div
+                          className="absolute top-1/2 h-1 bg-gradient-to-r from-blue-500 via-blue-400 to-transparent rounded-full blur-lg opacity-50 pointer-events-none transition-all duration-150"
+                          style={{
+                            left: "0%",
+                            width: `${videoDuration ? (videoCurrentTime / videoDuration) * 100 : 0}%`,
+                            transform: "translateY(-50%)",
+                          }}
+                        ></div>
+                      </div>
+                      <span className="text-xs font-mono text-white whitespace-nowrap transition-all duration-200 font-semibold">
+                        {formatDuration(videoCurrentTime)} /{" "}
+                        {formatDuration(videoDuration)}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Control Buttons */}
+                  <div className="px-6 pb-6 pt-2 flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <button
+                        onClick={() => {
+                          if (videoRef.current) {
+                            if (videoRef.current.paused) {
+                              videoRef.current.play().catch(() => {});
+                            } else {
+                              videoRef.current.pause();
+                            }
+                          }
+                        }}
+                        className="cursor-pointer p-2.5 rounded-full bg-white/10 hover:bg-white/20 transition-all duration-200 hover:scale-110 active:scale-95"
+                        title={videoRef.current?.paused ? "Play" : "Pause"}
+                      >
+                        {videoRef.current?.paused ? (
+                          <Play
+                            size={18}
+                            fill="white"
+                            className="animate-pulse"
+                          />
+                        ) : (
+                          <Play size={18} />
+                        )}
+                      </button>
+                      <button
+                        onClick={() => setIsMuted(!isMuted)}
+                        className="cursor-pointer p-2.5 rounded-full bg-white/10 hover:bg-white/20 transition-all duration-200 hover:scale-110 active:scale-95"
+                        title={isMuted ? "Unmute" : "Mute"}
+                      >
+                        {isMuted ? (
+                          <VolumeX size={18} />
+                        ) : (
+                          <Volume2 size={18} />
+                        )}
+                      </button>
+                      <div className="flex flex-col">
+                        <span className="text-xs font-bold text-white transition-all duration-200">
+                          PRIMARY_CAM_01
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={toggleFullscreen}
+                        className="cursor-pointer p-2.5 rounded-full bg-white/10 hover:bg-white/20 transition-all duration-200 hover:scale-110 active:scale-95"
+                        title="Fullscreen"
+                      >
+                        <Maximize size={18} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div
+                className={`w-[30%] border rounded-2xl max-h-[80vh] flex flex-col ${
+                  isDarkTheme
+                    ? "bg-slate-950 border-white/10"
+                    : "bg-white border-slate-300"
+                }`}
+              >
+                {/* Header */}
+                <div
+                  className={`flex justify-between items-center py-4 px-6 border-b ${
+                    isDarkTheme ? "border-white/5" : "border-slate-300"
+                  }`}
+                >
+                  <h2
+                    className={`text-sm font-bold flex items-center gap-2 ${
+                      isDarkTheme ? "text-white" : "text-slate-900"
+                    }`}
+                  >
+                    <Calendar
+                      size={24}
+                      className={
+                        isDarkTheme ? "text-blue-500" : "text-blue-600"
+                      }
+                    />
+                    Archive Footage
+                  </h2>
+                  {/* <button
+                    onClick={() => setShowArchiveBrowser(false)}
+                    className={`p-2 rounded-lg transition ${
+                      isDarkTheme ? "hover:bg-white/10" : "hover:bg-slate-200"
+                    }`}
+                  >
+                    <X size={20} />
+                  </button> */}
+                </div>
+
+                {/* Content */}
+                <div className="flex-1 overflow-y-auto">
+                  {loadingArchives ? (
+                    <div className="flex items-center justify-center h-64">
+                      <div className="relative w-10 h-10">
+                        {/* Outer rotating ring */}
+                        <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-blue-500 border-r-blue-400 animate-spin"></div>
+                        {/* Middle rotating ring (slower) */}
+                        <div
+                          className="absolute inset-1 rounded-full border-4 border-transparent border-b-blue-400 border-l-blue-500 animate-spin"
+                          style={{
+                            animationDirection: "reverse",
+                            animationDuration: "1.5s",
+                          }}
+                        ></div>
+                        {/* Center pulsing dot */}
+                        <div className="absolute inset-6 rounded-full bg-blue-500 animate-pulse"></div>
+                      </div>
+                    </div>
+                  ) : archives.length === 0 ? (
+                    <div
+                      className={`flex items-center justify-center h-64 ${
+                        isDarkTheme ? "text-slate-400" : "text-slate-600"
+                      }`}
+                    >
+                      <p>No archive footage available</p>
+                    </div>
+                  ) : (
+                    <div
+                      className={`divide-y ${
+                        isDarkTheme ? "divide-white/5" : "divide-slate-300"
+                      }`}
+                    >
+                      {archives.map((day) => (
+                        <div key={day.date} className="p-6">
+                          <h3
+                            className={`text-sm font-semibold mb-4 flex items-center gap-2 ${
+                              isDarkTheme ? "text-white" : "text-slate-900"
+                            }`}
+                          >
+                            <Calendar
+                              size={18}
+                              className={
+                                isDarkTheme ? "text-blue-500" : "text-blue-600"
+                              }
+                            />
+                            {new Date(day.date).toLocaleDateString(undefined, {
+                              weekday: "long",
+                              year: "numeric",
+                              month: "long",
+                              day: "numeric",
+                            })}
+                            <span
+                              className={`text-sm ml-2 ${
+                                isDarkTheme
+                                  ? "text-slate-400"
+                                  : "text-slate-600"
+                              }`}
+                            >
+                              ({day.fileCount} files)
+                            </span>
+                          </h3>
+
+                          <div className="grid grid-cols-1 gap-3">
+                            {day.files.map((file) => (
+                              <button
+                                key={file.id}
+                                onClick={() => handleSelectArchiveFile(file.id)}
+                                className={`cursor-pointer p-4 border rounded-lg transition text-left group ${
+                                  isDarkTheme
+                                    ? "bg-white/5 hover:bg-white/10 border-white/10"
+                                    : "bg-slate-100 hover:bg-slate-200 border-slate-300"
+                                }`}
+                              >
+                                <div className="flex items-start justify-between">
+                                  <div className="flex items-start gap-3 flex-1">
+                                    <FileVideo
+                                      size={20}
+                                      className={`mt-1 flex-shrink-0 ${
+                                        isDarkTheme
+                                          ? "text-blue-500"
+                                          : "text-blue-600"
+                                      }`}
+                                    />
+                                    <div className="flex-1">
+                                      <p
+                                        className={`font-semibold text-sm truncate ${
+                                          isDarkTheme
+                                            ? "text-white"
+                                            : "text-slate-900"
+                                        }`}
+                                      >
+                                        {file.name}
+                                      </p>
+                                      <div
+                                        className={`flex items-center gap-2 text-xs mt-1 ${
+                                          isDarkTheme
+                                            ? "text-slate-400"
+                                            : "text-slate-600"
+                                        }`}
+                                      >
+                                        <Clock size={14} />
+                                        {formatTime(file.createdTime)}
+                                      </div>
+                                      <p
+                                        className={`text-xs mt-1 ${
+                                          isDarkTheme
+                                            ? "text-slate-500"
+                                            : "text-slate-700"
+                                        }`}
+                                      >
+                                        {formatFileSize(file.size)}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <Play
+                                    size={18}
+                                    className={`flex-shrink-0 mt-1 transition ${
+                                      isDarkTheme
+                                        ? "text-slate-400 group-hover:text-blue-500"
+                                        : "text-slate-600 group-hover:text-blue-600"
+                                    }`}
+                                  />
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
+          ) : (
+            <div
+              className={`relative aspect-video rounded-2xl overflow-hidden border  ${
+                isDarkTheme
+                  ? "bg-black border-white/10"
+                  : "bg-slate-200 border-slate-300"
+              }`}
+            >
+              <video
+                ref={videoRef}
+                className="w-full h-full object-cover"
+                autoPlay
+                muted={isMuted}
+                playsInline
+              />
 
-            {/* Custom Controls Overlay */}
-            <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-              {/* Progress Bar */}
-              {(mode === "preview" ||
-                mode === "archive" ||
-                mode === "timeline") && (
-                <div className="px-6 pt-6 pb-3 group/bar">
-                  <div className="flex items-center gap-3">
-                    <div className="flex-1 relative">
-                      <input
-                        type="range"
-                        min="0"
-                        max={videoDuration || 0}
-                        value={videoCurrentTime}
-                        onChange={handleSeek}
-                        onMouseDown={() => setIsSeeking(true)}
-                        onMouseUp={() => setIsSeeking(false)}
-                        onTouchStart={() => setIsSeeking(true)}
-                        onTouchEnd={() => setIsSeeking(false)}
-                        className="w-full h-1 bg-white/20 rounded-lg appearance-none cursor-pointer transition-all duration-150 hover:h-2 group-hover/bar:h-2"
-                        style={{
-                          background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${
-                            videoDuration
-                              ? (videoCurrentTime / videoDuration) * 100
-                              : 0
-                          }%, rgba(255,255,255,0.2) ${
-                            videoDuration
-                              ? (videoCurrentTime / videoDuration) * 100
-                              : 0
-                          }%, rgba(255,255,255,0.2) 100%)`,
-                        }}
-                      />
-                      {/* Animated progress glow */}
+              {/* Loading Overlay (Single) */}
+              {isLoadingVideo && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-10">
+                  <div className="flex flex-col items-center gap-4">
+                    {/* Modern Animated Loader */}
+                    <div className="relative w-16 h-16">
+                      {/* Outer rotating ring */}
+                      <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-blue-500 border-r-blue-400 animate-spin"></div>
+                      {/* Middle rotating ring (slower) */}
                       <div
-                        className="absolute top-1/2 h-1 bg-gradient-to-r from-blue-500 via-blue-400 to-transparent rounded-full blur-lg opacity-50 pointer-events-none transition-all duration-150"
+                        className="absolute inset-1 rounded-full border-4 border-transparent border-b-blue-400 border-l-blue-500 animate-spin"
                         style={{
-                          left: "0%",
-                          width: `${videoDuration ? (videoCurrentTime / videoDuration) * 100 : 0}%`,
-                          transform: "translateY(-50%)",
+                          animationDirection: "reverse",
+                          animationDuration: "1.5s",
                         }}
                       ></div>
+                      {/* Center pulsing dot */}
+                      <div className="absolute inset-6 rounded-full bg-blue-500 animate-pulse"></div>
                     </div>
-                    <span className="text-xs font-mono text-white whitespace-nowrap transition-all duration-200 font-semibold">
-                      {formatDuration(videoCurrentTime)} /{" "}
-                      {formatDuration(videoDuration)}
-                    </span>
+                    <p className="text-white text-sm font-semibold animate-pulse">
+                      Loading footage...
+                    </p>
                   </div>
                 </div>
               )}
 
-              {/* Control Buttons */}
-              <div className="px-6 pb-6 pt-2 flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <button
-                    onClick={() => {
-                      if (videoRef.current) {
-                        if (videoRef.current.paused) {
-                          videoRef.current.play().catch(() => {});
-                        } else {
-                          videoRef.current.pause();
-                        }
-                      }
-                    }}
-                    className="cursor-pointer p-2.5 rounded-full bg-white/10 hover:bg-white/20 transition-all duration-200 hover:scale-110 active:scale-95"
-                    title={videoRef.current?.paused ? "Play" : "Pause"}
-                  >
-                    {videoRef.current?.paused ? (
-                      <Play size={18} fill="white" className="animate-pulse" />
-                    ) : (
-                      <Play size={18} />
-                    )}
-                  </button>
-                  <button
-                    onClick={() => setIsMuted(!isMuted)}
-                    className="cursor-pointer p-2.5 rounded-full bg-white/10 hover:bg-white/20 transition-all duration-200 hover:scale-110 active:scale-95"
-                    title={isMuted ? "Unmute" : "Mute"}
-                  >
-                    {isMuted ? <VolumeX size={18} /> : <Volume2 size={18} />}
-                  </button>
-                  <div className="flex flex-col">
-                    <span className="text-xs font-bold text-white transition-all duration-200">
-                      PRIMARY_CAM_01
-                    </span>
-                  </div>
-                </div>
+              {/* Scanning Overlay (Aesthetic) */}
+              <div className="absolute inset-0 pointer-events-none opacity-10 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[length:100%_4px,3px_100%]" />
 
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={toggleFullscreen}
-                    className="cursor-pointer p-2.5 rounded-full bg-white/10 hover:bg-white/20 transition-all duration-200 hover:scale-110 active:scale-95"
-                    title="Fullscreen"
-                  >
-                    <Maximize size={18} />
-                  </button>
+              {/* Top UI Overlays */}
+              <div className="absolute top-4 right-4 flex flex-col gap-2">
+                <div
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-md backdrop-blur-md border ${
+                    mode === "live"
+                      ? "bg-red-500/10 border-red-500/50 text-red-500"
+                      : "bg-blue-500/10 border-blue-500/50 text-blue-500"
+                  }`}
+                >
+                  <Circle
+                    size={8}
+                    fill="currentColor"
+                    className={mode === "live" ? "animate-pulse" : ""}
+                  />
+                  <span className="text-xs font-black tracking-widest">
+                    {mode === "live" ? "LIVE FEED" : "PREVIEW"}
+                  </span>
+                </div>
+              </div>
+
+              {/* Custom Controls Overlay */}
+              <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                {/* Progress Bar */}
+                {(mode === "preview" || mode === "timeline") && (
+                  <div className="px-6 pt-6 pb-3 group/bar">
+                    <div className="flex items-center gap-3">
+                      <div className="flex-1 relative">
+                        <input
+                          type="range"
+                          min="0"
+                          max={videoDuration || 0}
+                          value={videoCurrentTime}
+                          onChange={handleSeek}
+                          onMouseDown={() => setIsSeeking(true)}
+                          onMouseUp={() => setIsSeeking(false)}
+                          onTouchStart={() => setIsSeeking(true)}
+                          onTouchEnd={() => setIsSeeking(false)}
+                          className="w-full h-1 bg-white/20 rounded-lg appearance-none cursor-pointer transition-all duration-150 hover:h-2 group-hover/bar:h-2"
+                          style={{
+                            background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${
+                              videoDuration
+                                ? (videoCurrentTime / videoDuration) * 100
+                                : 0
+                            }%, rgba(255,255,255,0.2) ${
+                              videoDuration
+                                ? (videoCurrentTime / videoDuration) * 100
+                                : 0
+                            }%, rgba(255,255,255,0.2) 100%)`,
+                          }}
+                        />
+                        {/* Animated progress glow */}
+                        <div
+                          className="absolute top-1/2 h-1 bg-gradient-to-r from-blue-500 via-blue-400 to-transparent rounded-full blur-lg opacity-50 pointer-events-none transition-all duration-150"
+                          style={{
+                            left: "0%",
+                            width: `${videoDuration ? (videoCurrentTime / videoDuration) * 100 : 0}%`,
+                            transform: "translateY(-50%)",
+                          }}
+                        ></div>
+                      </div>
+                      <span className="text-xs font-mono text-white whitespace-nowrap transition-all duration-200 font-semibold">
+                        {formatDuration(videoCurrentTime)} /{" "}
+                        {formatDuration(videoDuration)}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Control Buttons */}
+                <div className="px-6 pb-6 pt-2 flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <button
+                      onClick={() => {
+                        if (videoRef.current) {
+                          if (videoRef.current.paused) {
+                            videoRef.current.play().catch(() => {});
+                          } else {
+                            videoRef.current.pause();
+                          }
+                        }
+                      }}
+                      className="cursor-pointer p-2.5 rounded-full bg-white/10 hover:bg-white/20 transition-all duration-200 hover:scale-110 active:scale-95"
+                      title={videoRef.current?.paused ? "Play" : "Pause"}
+                    >
+                      {videoRef.current?.paused ? (
+                        <Play
+                          size={18}
+                          fill="white"
+                          className="animate-pulse"
+                        />
+                      ) : (
+                        <Play size={18} />
+                      )}
+                    </button>
+                    <button
+                      onClick={() => setIsMuted(!isMuted)}
+                      className="cursor-pointer p-2.5 rounded-full bg-white/10 hover:bg-white/20 transition-all duration-200 hover:scale-110 active:scale-95"
+                      title={isMuted ? "Unmute" : "Mute"}
+                    >
+                      {isMuted ? <VolumeX size={18} /> : <Volume2 size={18} />}
+                    </button>
+                    <div className="flex flex-col">
+                      <span className="text-xs font-bold text-white transition-all duration-200">
+                        PRIMARY_CAM_01
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={toggleFullscreen}
+                      className="cursor-pointer p-2.5 rounded-full bg-white/10 hover:bg-white/20 transition-all duration-200 hover:scale-110 active:scale-95"
+                      title="Fullscreen"
+                    >
+                      <Maximize size={18} />
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          )}
 
           {/* Action Dock */}
           <div className="mt-4 flex justify-center">
@@ -887,7 +1220,7 @@ export default function Home() {
           >
             {/* Header */}
             <div
-              className={`flex justify-between items-center py-4 px-6 border-b ${
+              className={`flex justify-between items-center py-3 px-6 border-b ${
                 isDarkTheme ? "border-white/5" : "border-slate-300"
               }`}
             >
@@ -904,7 +1237,7 @@ export default function Home() {
               </h2>
               <button
                 onClick={() => setShowArchiveBrowser(false)}
-                className={`p-2 rounded-lg transition ${
+                className={`cursor-pointer p-2 rounded-lg transition ${
                   isDarkTheme ? "hover:bg-white/10" : "hover:bg-slate-200"
                 }`}
               >
