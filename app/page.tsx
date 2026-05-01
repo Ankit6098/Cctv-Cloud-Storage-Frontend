@@ -1019,7 +1019,7 @@ export default function Home() {
           {/* Timeline Scrubber */}
           {mode === "timeline" && timelineRecordings.length > 0 && (
             <div
-              className={`mt-6 p-6 rounded-2xl border ${
+              className={`w-full mt-6 p-6 rounded-2xl border ${
                 isDarkTheme
                   ? "bg-slate-900/50 border-white/10"
                   : "bg-slate-200/50 border-slate-300"
@@ -1036,12 +1036,12 @@ export default function Home() {
               </h3>
 
               {/* Timeline segments visualization */}
-              <div className="space-y-4">
+              <div className="w-full space-y-4">
                 {/* Timeline bar with all segments */}
-                <div className="flex items-center gap-3">
-                  <div className="flex-1">
+                <div className="w-full flex items-center gap-3">
+                  <div className="w-[95%] flex-1 ">
                     <div
-                      className={`h-12 rounded-lg overflow-hidden border flex ${
+                      className={`w-full h-12 overflow-x-scroll pt-2 rounded-lg overflow-hidden border flex ${
                         isDarkTheme
                           ? "bg-slate-800 border-white/10"
                           : "bg-slate-300 border-slate-400"
@@ -1054,7 +1054,7 @@ export default function Home() {
                             setCurrentRecordingIndex(index);
                             // The useEffect will handle loading the video with the correct URL
                           }}
-                          className={`flex-1 transition-all hover:opacity-100 relative group ${
+                          className={`mx-3 cursor-pointer flex-1 transition-all hover:opacity-100 relative group ${
                             currentRecordingIndex === index
                               ? isDarkTheme
                                 ? "bg-blue-600 opacity-100"
