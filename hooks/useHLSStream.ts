@@ -3,7 +3,7 @@ import Hls from "hls.js";
 import { VideoMode, TimelineRecording } from "@/lib/types";
 
 interface UseHLSStreamProps {
-  videoRef: React.RefObject<HTMLVideoElement>;
+  videoRef: React.RefObject<HTMLVideoElement | null>;
   mode: VideoMode;
   previewUrl?: string | null;
   selectedFileId?: string | null;

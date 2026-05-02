@@ -9,7 +9,7 @@ import { VideoMode } from "@/lib/types";
 
 interface VideoPlayerProps {
   mode: VideoMode;
-  videoRef: React.RefObject<HTMLVideoElement>;
+  videoRef: React.RefObject<HTMLVideoElement | null>;
   isLoading: boolean;
   isDarkTheme: boolean;
   isMuted: boolean;
