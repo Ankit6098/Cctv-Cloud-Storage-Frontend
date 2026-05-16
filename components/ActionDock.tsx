@@ -23,9 +23,9 @@ export function ActionDock({
   handleOpenArchiveBrowser,
 }: ActionDockProps) {
   return (
-    <div className="mt-4 flex justify-center">
+    <div className="mt-4 hidden md:flex justify-center">
       <div
-        className={`border p-1.5 rounded-2xl flex gap-1 backdrop-blur-xl ${
+        className={`border p-1.5 rounded-2xl flex flex-col sm:flex-row gap-1 backdrop-blur-xl ${
           isDarkTheme
             ? "bg-white/5 border-white/10"
             : "bg-slate-300/30 border-slate-400"
@@ -33,7 +33,7 @@ export function ActionDock({
       >
         <button
           onClick={() => setMode("live")}
-          className={`cursor-pointer flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold transition-all ${
+          className={`cursor-pointer flex justify-center items-center gap-2 w-full sm:w-auto px-4 sm:px-6 py-3 rounded-xl text-sm font-semibold transition-all ${
             mode === "live"
               ? isDarkTheme
                 ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20"
@@ -50,7 +50,7 @@ export function ActionDock({
         <button
           onClick={handlePreview}
           disabled={loadingPreview || loadingTimeline}
-          className={`cursor-pointer flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold transition-all ${
+          className={`cursor-pointer flex justify-center items-center gap-2 w-full sm:w-auto px-4 sm:px-6 py-3 rounded-xl text-sm font-semibold transition-all ${
             mode === "timeline"
               ? isDarkTheme
                 ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20"
@@ -68,7 +68,7 @@ export function ActionDock({
 
         <button
           onClick={handleOpenArchiveBrowser}
-          className={`cursor-pointer flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold transition-all ${
+          className={`cursor-pointer flex justify-center items-center gap-2 w-full sm:w-auto px-4 sm:px-6 py-3 rounded-xl text-sm font-semibold transition-all ${
             mode === "archive"
               ? isDarkTheme
                 ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20"

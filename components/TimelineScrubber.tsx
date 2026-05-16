@@ -91,7 +91,7 @@ export function TimelineScrubber({
               : "bg-slate-300/50 border-slate-400"
               }`}
           >
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-0">
               <div>
                 <p
                   className={`text-xs font-bold ${isDarkTheme ? "text-blue-400" : "text-blue-600"

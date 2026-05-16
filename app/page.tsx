@@ -17,6 +17,14 @@ import { useTimeline } from "@/hooks/useTimeline";
 import { useArchives } from "@/hooks/useArchives";
 import { useVideoPlayer } from "@/hooks/useVideoPlayer";
 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
 export default function Home() {
   const containerRef = useRef<HTMLDivElement | null>(null);
 
@@ -27,7 +35,7 @@ export default function Home() {
   // Custom Hooks
   const currentTime = useClock();
   const { isDarkTheme, setIsDarkTheme, is24HourFormat, setIs24HourFormat } = useTheme(containerRef);
-  
+
   const {
     timelineRecordings,
     loadingTimeline,
@@ -69,9 +77,8 @@ export default function Home() {
   return (
     <div
       ref={containerRef}
-      className={`min-h-screen font-sans selection:bg-blue-500/30 transition-colors ${
-        isDarkTheme ? "bg-[#0a0a0c] text-slate-200" : "bg-slate-100 text-slate-900"
-      }`}
+      className={`min-h-screen font-sans selection:bg-blue-500/30 transition-colors ${isDarkTheme ? "bg-[#0a0a0c] text-slate-200" : "bg-slate-100 text-slate-900"
+        }`}
     >
       <Navbar
         currentTime={currentTime}
@@ -81,11 +88,105 @@ export default function Home() {
         onTimeFormatChange={setIs24HourFormat}
       />
 
+      {/* Mobile Mode Selector */}
+      <div className="md:hidden px-4 pt-4">
+        <Select
+          value={mode}
+          onValueChange={(val: any) => {
+            const videoMode = val as VideoMode;
+
+            if (videoMode === "live") {
+              setMode("live");
+            } else if (videoMode === "timeline") {
+              handlePreview();
+            } else if (videoMode === "archive") {
+              handleOpenArchiveBrowser();
+            }
+          }}
+        >
+          <SelectTrigger
+            className={`
+        w-full h-12
+        px-4
+        rounded-xl
+        text-sm font-semibold
+        flex items-center justify-between
+        shadow-none
+        ring-0 ring-offset-0
+        focus:outline-none
+        focus:ring-0
+        focus-visible:outline-none
+        focus-visible:ring-0
+        focus-visible:ring-transparent
+        data-[state=open]:ring-0
+        ${isDarkTheme
+                ? "bg-slate-900/50 border border-white/10 text-white"
+                : "bg-white border border-slate-300 text-slate-900"
+              }
+      `}
+          >
+            <SelectValue placeholder="Select Mode" />
+          </SelectTrigger>
+
+          <SelectContent
+            className={`
+        rounded-xl p-1 shadow-lg
+        ${isDarkTheme
+                ? "bg-slate-900 border border-white/10 text-white"
+                : "bg-white border border-slate-300 text-slate-900"
+              }
+      `}
+          >
+            <SelectItem
+              value="live"
+              className="
+          
+          rounded-lg
+          flex items-center
+          text-sm
+          pl-3 pr-8
+          cursor-pointer
+        "
+            >
+              Live Monitor
+            </SelectItem>
+
+            <SelectItem
+              value="timeline"
+              className="
+         
+          rounded-lg
+          flex items-center
+          text-sm
+          pl-3 pr-8
+          cursor-pointer
+        "
+            >
+              Recent (Timeline)
+            </SelectItem>
+
+            <SelectItem
+              value="archive"
+              className="
+          
+          rounded-lg
+          flex items-center
+          text-sm
+          pl-3 pr-8
+          cursor-pointer
+        "
+            >
+              Archives
+            </SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
       <main className="max-w-[1600px] mx-auto p-4 md:p-8">
         <div className="relative group">
           {mode === "archive" ? (
-            <div className="flex gap-4 w-full">
-              <div className="w-[70%] h-[60vh]">
+            <div className="flex flex-col lg:flex-row gap-4 w-full">
+              <div className="w-full lg:w-[70%] h-[40vh] md:h-[50vh] lg:h-[60vh]">
                 <VideoPlayer
                   videoRef={videoRef}
                   mode={mode}
@@ -101,19 +202,16 @@ export default function Home() {
                 />
               </div>
               <div
-                className={`w-[30%] border rounded-2xl max-h-[80vh] flex flex-col ${
-                  isDarkTheme ? "bg-slate-950 border-white/10" : "bg-white border-slate-300"
-                }`}
+                className={`w-full lg:w-[30%] border rounded-2xl h-[40vh] md:h-[50vh] lg:h-[60vh] flex flex-col ${isDarkTheme ? "bg-slate-950 border-white/10" : "bg-white border-slate-300"
+                  }`}
               >
                 <div
-                  className={`flex justify-between items-center py-4 px-6 border-b ${
-                    isDarkTheme ? "border-white/5" : "border-slate-300"
-                  }`}
+                  className={`flex justify-between items-center py-4 px-6 border-b ${isDarkTheme ? "border-white/5" : "border-slate-300"
+                    }`}
                 >
                   <h2
-                    className={`text-sm font-bold flex items-center gap-2 ${
-                      isDarkTheme ? "text-white" : "text-slate-900"
-                    }`}
+                    className={`text-sm font-bold flex items-center gap-2 ${isDarkTheme ? "text-white" : "text-slate-900"
+                      }`}
                   >
                     <Calendar
                       size={24}
@@ -178,14 +276,12 @@ export default function Home() {
       />
 
       <footer
-        className={`fixed bottom-1 w-full text-center pointer-events-none ${
-          isDarkTheme ? "text-slate-600" : "text-slate-500"
-        }`}
+        className={`fixed bottom-1 w-full text-center pointer-events-none ${isDarkTheme ? "text-slate-600" : "text-slate-500"
+          }`}
       >
         <p
-          className={`text-[10px] uppercase tracking-[0.1em] font-bold inline-block px-3 py-1 rounded-full backdrop-blur-md ${
-            isDarkTheme ? "bg-black/20" : "bg-white/20"
-          }`}
+          className={`text-[10px] uppercase tracking-[0.1em] font-bold inline-block px-3 py-1 rounded-full backdrop-blur-md ${isDarkTheme ? "bg-black/20" : "bg-white/20"
+            }`}
         >
           System Status: <span className="text-emerald-500">Nominal</span>
         </p>

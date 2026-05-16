@@ -100,19 +100,19 @@ export function ArchiveList({
               <button
                 key={file.id}
                 onClick={() => handleSelectArchiveFile(file.id)}
-                className={`cursor-pointer p-4 border rounded-lg transition text-left group ${isDarkTheme
+                className={`w-full overflow-hidden cursor-pointer p-4 border rounded-lg transition text-left group ${isDarkTheme
                     ? "bg-white/5 hover:bg-white/10 border-white/10"
                     : "bg-slate-100 hover:bg-slate-200 border-slate-300"
                   }`}
               >
-                <div className="flex items-start justify-between">
-                  <div className="flex items-start gap-3 flex-1">
+                <div className="flex items-start justify-between gap-2 w-full">
+                  <div className="flex items-start gap-3 flex-1 min-w-0">
                     <FileVideo
                       size={20}
                       className={`mt-1 flex-shrink-0 ${isDarkTheme ? "text-blue-500" : "text-blue-600"
                         }`}
                     />
-                    <div className="flex-1">
+                    <div className="flex-1 min-w-0">
                       <p
                         className={`font-semibold text-sm truncate ${isDarkTheme ? "text-white" : "text-slate-900"
                           }`}
