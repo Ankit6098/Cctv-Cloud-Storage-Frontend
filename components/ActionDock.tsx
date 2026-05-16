@@ -1,20 +1,26 @@
 "use client";
 
-import { Activity, Play, History, Loader2 } from "lucide-react";
+import { Activity, Play, History } from "lucide-react";
 import { VideoMode } from "@/lib/types";
 
 interface ActionDockProps {
   mode: VideoMode;
+  setMode: (mode: VideoMode) => void;
   isDarkTheme: boolean;
-  isLoadingTimeline: boolean;
-  onModeChange: (mode: VideoMode) => void;
+  loadingPreview: boolean;
+  loadingTimeline: boolean;
+  handlePreview: () => void;
+  handleOpenArchiveBrowser: () => void;
 }
 
 export function ActionDock({
   mode,
+  setMode,
   isDarkTheme,
-  isLoadingTimeline,
-  onModeChange,
+  loadingPreview,
+  loadingTimeline,
+  handlePreview,
+  handleOpenArchiveBrowser,
 }: ActionDockProps) {
   return (
     <div className="mt-4 flex justify-center">
@@ -26,15 +32,15 @@ export function ActionDock({
         }`}
       >
         <button
-          onClick={() => onModeChange("live")}
+          onClick={() => setMode("live")}
           className={`cursor-pointer flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold transition-all ${
             mode === "live"
               ? isDarkTheme
                 ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20"
                 : "bg-blue-500 text-white shadow-lg shadow-blue-500/20"
               : isDarkTheme
-                ? "hover:bg-white/5 text-slate-400"
-                : "hover:bg-slate-300 text-slate-700"
+              ? "hover:bg-white/5 text-slate-400"
+              : "hover:bg-slate-300 text-slate-700"
           }`}
         >
           <Activity size={18} />
@@ -42,36 +48,34 @@ export function ActionDock({
         </button>
 
         <button
-          onClick={() => onModeChange("timeline")}
-          disabled={isLoadingTimeline}
+          onClick={handlePreview}
+          disabled={loadingPreview || loadingTimeline}
           className={`cursor-pointer flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold transition-all ${
             mode === "timeline"
               ? isDarkTheme
                 ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20"
                 : "bg-blue-500 text-white shadow-lg shadow-blue-500/20"
               : isDarkTheme
-                ? "hover:bg-white/5 text-slate-400"
-                : "hover:bg-slate-300 text-slate-700"
-          } ${isLoadingTimeline && "opacity-50 cursor-wait"}`}
+              ? "hover:bg-white/5 text-slate-400"
+              : "hover:bg-slate-300 text-slate-700"
+          } ${(loadingPreview || loadingTimeline) && "opacity-50 cursor-wait"}`}
         >
-          {isLoadingTimeline ? (
-            <Loader2 size={18} className="animate-spin" />
-          ) : (
-            <Play size={18} />
-          )}
-          {isLoadingTimeline ? "Loading..." : "Recent (Timeline)"}
+          <Play size={18} />
+          {loadingPreview || loadingTimeline
+            ? "Loading..."
+            : "Recent (Timeline)"}
         </button>
 
         <button
-          onClick={() => onModeChange("archive")}
+          onClick={handleOpenArchiveBrowser}
           className={`cursor-pointer flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold transition-all ${
             mode === "archive"
               ? isDarkTheme
                 ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20"
                 : "bg-blue-500 text-white shadow-lg shadow-blue-500/20"
               : isDarkTheme
-                ? "hover:bg-white/5 text-slate-400"
-                : "hover:bg-slate-300 text-slate-700"
+              ? "hover:bg-white/5 text-slate-400"
+              : "hover:bg-slate-300 text-slate-700"
           }`}
         >
           <History size={18} />

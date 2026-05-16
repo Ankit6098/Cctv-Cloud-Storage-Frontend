@@ -1,30 +1,34 @@
-import { useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import Hls from "hls.js";
 import { VideoMode, TimelineRecording } from "@/lib/types";
 
-interface UseHLSStreamProps {
-  videoRef: React.RefObject<HTMLVideoElement | null>;
+interface UseVideoPlayerOptions {
   mode: VideoMode;
-  previewUrl?: string | null;
-  selectedFileId?: string | null;
+  previewUrl: string | null;
   timelineRecordings: TimelineRecording[];
   currentRecordingIndex: number;
-  onLoadingStart: () => void;
-  onLoadingEnd: () => void;
+  selectedFileId: string | null;
+  containerRef: React.RefObject<HTMLDivElement | null>;
 }
 
-export function useHLSStream({
-  videoRef,
+export function useVideoPlayer({
   mode,
   previewUrl,
-  selectedFileId,
   timelineRecordings,
   currentRecordingIndex,
-  onLoadingStart,
-  onLoadingEnd,
-}: UseHLSStreamProps) {
-  const hlsRef = useRef<Hls | null>(null);
+  selectedFileId,
+  containerRef,
+}: UseVideoPlayerOptions) {
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isMuted, setIsMuted] = useState(true);
+  const [isLoadingVideo, setIsLoadingVideo] = useState(false);
+  const [videoDuration, setVideoDuration] = useState(0);
+  const [videoCurrentTime, setVideoCurrentTime] = useState(0);
+  const [isSeeking, setIsSeeking] = useState(false);
 
+  // HLS Setup for Live Stream or MP4 for Archive
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
@@ -32,7 +36,7 @@ export function useHLSStream({
     let hls: Hls | null = null;
 
     if (mode === "live") {
-      const streamUrl = `${process.env.BACKENDURL}/stream/index.m3u8`;
+      const streamUrl = "http://localhost:5000/stream/index.m3u8";
 
       if (Hls.isSupported()) {
         hls = new Hls({
@@ -55,23 +59,22 @@ export function useHLSStream({
         video.play().catch(() => {});
       }
     } else if (mode === "preview" && previewUrl) {
-      onLoadingStart();
+      setIsLoadingVideo(true);
       video.src = previewUrl;
 
       const handleCanPlay = () => {
-        onLoadingEnd();
+        setIsLoadingVideo(false);
         video.play().catch(() => {});
       };
 
       video.addEventListener("canplay", handleCanPlay);
       return () => video.removeEventListener("canplay", handleCanPlay);
     } else if (mode === "timeline" && timelineRecordings.length > 0) {
-      onLoadingStart();
+      setIsLoadingVideo(true);
       const currentRecording = timelineRecordings[currentRecordingIndex];
 
       if (currentRecording) {
         let videoUrl = currentRecording.url;
-
         if (currentRecording.source === "drive" && currentRecording.fileId) {
           videoUrl = `http://localhost:5000/api/stream-archive/${currentRecording.fileId}`;
         } else if (currentRecording.source === "local") {
@@ -81,7 +84,7 @@ export function useHLSStream({
         video.src = videoUrl;
 
         const handleCanPlay = () => {
-          onLoadingEnd();
+          setIsLoadingVideo(false);
           video.play().catch(() => {});
         };
 
@@ -89,12 +92,12 @@ export function useHLSStream({
         return () => video.removeEventListener("canplay", handleCanPlay);
       }
     } else if (mode === "archive" && selectedFileId) {
-      onLoadingStart();
+      setIsLoadingVideo(true);
       const archiveUrl = `http://localhost:5000/api/stream-archive/${selectedFileId}`;
       video.src = archiveUrl;
 
       const handleCanPlay = () => {
-        onLoadingEnd();
+        setIsLoadingVideo(false);
         video.play().catch(() => {});
       };
 
@@ -102,7 +105,6 @@ export function useHLSStream({
       return () => video.removeEventListener("canplay", handleCanPlay);
     }
 
-    hlsRef.current = hls;
     return () => hls?.destroy();
   }, [
     mode,
@@ -110,8 +112,60 @@ export function useHLSStream({
     selectedFileId,
     timelineRecordings,
     currentRecordingIndex,
-    videoRef,
-    onLoadingStart,
-    onLoadingEnd,
   ]);
+
+  // Update video time and duration
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    const handleLoadedMetadata = () => {
+      setVideoDuration(video.duration);
+    };
+
+    const handleTimeUpdate = () => {
+      if (!isSeeking) {
+        setVideoCurrentTime(video.currentTime);
+      }
+    };
+
+    video.addEventListener("loadedmetadata", handleLoadedMetadata);
+    video.addEventListener("timeupdate", handleTimeUpdate);
+
+    return () => {
+      video.removeEventListener("loadedmetadata", handleLoadedMetadata);
+      video.removeEventListener("timeupdate", handleTimeUpdate);
+    };
+  }, [isSeeking]);
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      containerRef.current?.requestFullscreen();
+      setIsFullscreen(true);
+    } else {
+      document.exitFullscreen();
+      setIsFullscreen(false);
+    }
+  };
+
+  const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newTime = parseFloat(e.target.value);
+    if (videoRef.current) {
+      videoRef.current.currentTime = newTime;
+      setVideoCurrentTime(newTime);
+    }
+  };
+
+  return {
+    videoRef,
+    isLoadingVideo,
+    isMuted,
+    setIsMuted,
+    videoDuration,
+    videoCurrentTime,
+    handleSeek,
+    setIsSeeking,
+    toggleFullscreen,
+    isFullscreen,
+  };
 }

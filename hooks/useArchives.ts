@@ -1,14 +1,16 @@
 import { useState } from "react";
-import { ArchiveDay } from "@/lib/types";
+import { ArchiveDay, VideoMode } from "@/lib/types";
 
-export function useArchiveData() {
+export function useArchives(setMode: (mode: VideoMode) => void) {
   const [archives, setArchives] = useState<ArchiveDay[]>([]);
   const [loadingArchives, setLoadingArchives] = useState(false);
+  const [showArchiveBrowser, setShowArchiveBrowser] = useState(false);
+  const [selectedFileId, setSelectedFileId] = useState<string | null>(null);
 
   const loadArchives = async (startDate?: string, endDate?: string) => {
     setLoadingArchives(true);
     try {
-      let url = `${process.env.BACKENDURL}/api/archive`;
+      let url = "http://localhost:5000/api/archive";
       const params = new URLSearchParams();
       if (startDate) params.append("startDate", startDate);
       if (endDate) params.append("endDate", endDate);
@@ -26,5 +28,24 @@ export function useArchiveData() {
     }
   };
 
-  return { archives, loadingArchives, loadArchives };
+  const handleOpenArchiveBrowser = () => {
+    setShowArchiveBrowser(true);
+    loadArchives();
+  };
+
+  const handleSelectArchiveFile = (fileId: string) => {
+    setSelectedFileId(fileId);
+    setMode("archive");
+    setShowArchiveBrowser(false);
+  };
+
+  return {
+    archives,
+    loadingArchives,
+    showArchiveBrowser,
+    setShowArchiveBrowser,
+    selectedFileId,
+    handleOpenArchiveBrowser,
+    handleSelectArchiveFile,
+  };
 }
