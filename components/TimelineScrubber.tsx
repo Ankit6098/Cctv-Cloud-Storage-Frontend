@@ -1,6 +1,6 @@
 "use client";
 
-import { Clock, ChevronLeft } from "lucide-react";
+import { Clock, ChevronLeft, Download } from "lucide-react";
 import { TimelineRecording, VideoMode } from "@/lib/types";
 
 interface TimelineScrubberProps {
@@ -23,8 +23,8 @@ export function TimelineScrubber({
   return (
     <div
       className={`w-full mt-6 p-6 rounded-2xl border ${isDarkTheme
-          ? "bg-slate-900/50 border-white/10"
-          : "bg-slate-200/50 border-slate-300"
+        ? "bg-slate-900/50 border-white/10"
+        : "bg-slate-200/50 border-slate-300"
         }`}
     >
       <h3
@@ -42,8 +42,8 @@ export function TimelineScrubber({
           <div className="w-[95%] flex-1 ">
             <div
               className={`w-full h-12 overflow-x-scroll pt-2 rounded-lg overflow-hidden border flex ${isDarkTheme
-                  ? "bg-slate-800 border-white/10"
-                  : "bg-slate-300 border-slate-400"
+                ? "bg-slate-800 border-white/10"
+                : "bg-slate-300 border-slate-400"
                 }`}
             >
               {timelineRecordings.map((recording, index) => (
@@ -51,12 +51,12 @@ export function TimelineScrubber({
                   key={recording.id}
                   onClick={() => setCurrentRecordingIndex(index)}
                   className={`mx-3 cursor-pointer flex-1 transition-all hover:opacity-100 relative group ${currentRecordingIndex === index
-                      ? isDarkTheme
-                        ? "bg-blue-600 opacity-100"
-                        : "bg-blue-500 opacity-100"
-                      : isDarkTheme
-                        ? "bg-slate-700 opacity-60 hover:opacity-80"
-                        : "bg-slate-400 opacity-60 hover:opacity-80"
+                    ? isDarkTheme
+                      ? "bg-blue-600 opacity-100"
+                      : "bg-blue-500 opacity-100"
+                    : isDarkTheme
+                      ? "bg-slate-700 opacity-60 hover:opacity-80"
+                      : "bg-slate-400 opacity-60 hover:opacity-80"
                     }`}
                   title={`${new Date(
                     recording.createdAt
@@ -87,8 +87,8 @@ export function TimelineScrubber({
         {timelineRecordings[currentRecordingIndex] && (
           <div
             className={`p-3 rounded-lg border ${isDarkTheme
-                ? "bg-slate-800/50 border-white/5"
-                : "bg-slate-300/50 border-slate-400"
+              ? "bg-slate-800/50 border-white/5"
+              : "bg-slate-300/50 border-slate-400"
               }`}
           >
             <div className="flex items-center justify-between">
@@ -117,12 +117,12 @@ export function TimelineScrubber({
                   </p>
                   <span
                     className={`inline-block px-2 py-0.5 text-xs font-semibold rounded ${timelineRecordings[currentRecordingIndex].source === "drive"
-                        ? isDarkTheme
-                          ? "bg-purple-600/30 text-purple-300"
-                          : "bg-purple-200 text-purple-800"
-                        : isDarkTheme
-                          ? "bg-green-600/30 text-green-300"
-                          : "bg-green-200 text-green-800"
+                      ? isDarkTheme
+                        ? "bg-purple-600/30 text-purple-300"
+                        : "bg-purple-200 text-purple-800"
+                      : isDarkTheme
+                        ? "bg-green-600/30 text-green-300"
+                        : "bg-green-200 text-green-800"
                       }`}
                   >
                     {timelineRecordings[currentRecordingIndex].source === "drive"
@@ -133,18 +133,39 @@ export function TimelineScrubber({
               </div>
               <div className="flex gap-2">
                 <button
+                  onClick={() => {
+                    const currentRecording = timelineRecordings[currentRecordingIndex];
+                    if (currentRecording) {
+                      let videoUrl = currentRecording.url;
+                      if (currentRecording.source === "drive" && currentRecording.fileId) {
+                        videoUrl = `http://localhost:5000/api/stream-archive/${currentRecording.fileId}?download=true`;
+                      } else if (currentRecording.source === "local") {
+                        videoUrl = `http://localhost:5000/api/download-local/${currentRecording.id}`;
+                      }
+                      window.open(videoUrl, "_self");
+                    }
+                  }}
+                  className={`p-2 rounded cursor-pointer transition ${isDarkTheme
+                    ? "bg-white/10 hover:bg-white/20 text-white"
+                    : "hover:bg-slate-400 text-slate-900"
+                    }`}
+                  title="Download Recording"
+                >
+                  <Download size={16} />
+                </button>
+                <button
                   disabled={currentRecordingIndex === 0}
                   onClick={() => {
                     const newIndex = Math.max(0, currentRecordingIndex - 1);
                     setCurrentRecordingIndex(newIndex);
                   }}
-                  className={`p-2 rounded transition ${currentRecordingIndex === 0
-                      ? isDarkTheme
-                        ? "bg-slate-700 text-slate-500 cursor-not-allowed"
-                        : "bg-slate-400 text-slate-600 cursor-not-allowed"
-                      : isDarkTheme
-                        ? "bg-white/10 hover:bg-white/20 text-white"
-                        : "hover:bg-slate-400 text-slate-900"
+                  className={`p-2 rounded  transition ${currentRecordingIndex === 0
+                    ? isDarkTheme
+                      ? "bg-slate-700 text-slate-500 cursor-not-allowed"
+                      : "bg-slate-400 text-slate-600 cursor-not-allowed"
+                    : isDarkTheme
+                      ? "bg-white/10 hover:bg-white/20 text-white cursor-pointer"
+                      : "hover:bg-slate-400 text-slate-900 cursor-pointer"
                     }`}
                 >
                   <ChevronLeft size={16} />
@@ -161,12 +182,12 @@ export function TimelineScrubber({
                     setCurrentRecordingIndex(newIndex);
                   }}
                   className={`p-2 rounded transition ${currentRecordingIndex === timelineRecordings.length - 1
-                      ? isDarkTheme
-                        ? "bg-slate-700 text-slate-500 cursor-not-allowed"
-                        : "bg-slate-400 text-slate-600 cursor-not-allowed"
-                      : isDarkTheme
-                        ? "bg-white/10 hover:bg-white/20 text-white"
-                        : "hover:bg-slate-400 text-slate-900"
+                    ? isDarkTheme
+                      ? "bg-slate-700 text-slate-500 cursor-not-allowed"
+                      : "bg-slate-400 text-slate-600 cursor-not-allowed"
+                    : isDarkTheme
+                      ? "bg-white/10 hover:bg-white/20 text-white cursor-pointer"
+                      : "hover:bg-slate-400 text-slate-900 cursor-pointer"
                     }`}
                 >
                   <ChevronLeft size={16} className="rotate-180" />

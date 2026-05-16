@@ -1,6 +1,6 @@
 "use client";
 
-import { Calendar, FileVideo, Clock, Play } from "lucide-react";
+import { Calendar, FileVideo, Clock, Play, Download } from "lucide-react";
 import { ArchiveDay } from "@/lib/types";
 
 interface ArchiveListProps {
@@ -55,9 +55,8 @@ export function ArchiveList({
   if (archives.length === 0) {
     return (
       <div
-        className={`flex items-center justify-center h-64 ${
-          isDarkTheme ? "text-slate-400" : "text-slate-600"
-        }`}
+        className={`flex items-center justify-center h-64 ${isDarkTheme ? "text-slate-400" : "text-slate-600"
+          }`}
       >
         <p>No archive footage available</p>
       </div>
@@ -66,16 +65,14 @@ export function ArchiveList({
 
   return (
     <div
-      className={`divide-y ${
-        isDarkTheme ? "divide-white/5" : "divide-slate-300"
-      }`}
+      className={`divide-y ${isDarkTheme ? "divide-white/5" : "divide-slate-300"
+        }`}
     >
       {archives.map((day) => (
         <div key={day.date} className="p-6">
           <h3
-            className={`text-sm font-semibold mb-4 flex items-center gap-2 ${
-              isDarkTheme ? "text-white" : "text-slate-900"
-            }`}
+            className={`text-sm font-semibold mb-4 flex items-center gap-2 ${isDarkTheme ? "text-white" : "text-slate-900"
+              }`}
           >
             <Calendar
               size={18}
@@ -88,70 +85,75 @@ export function ArchiveList({
               day: "numeric",
             })}
             <span
-              className={`text-sm ml-2 ${
-                isDarkTheme ? "text-slate-400" : "text-slate-600"
-              }`}
+              className={`text-sm ml-2 ${isDarkTheme ? "text-slate-400" : "text-slate-600"
+                }`}
             >
               ({day.fileCount} files)
             </span>
           </h3>
 
           <div
-            className={`grid gap-3 ${
-              gridCols === 2 ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1"
-            }`}
+            className={`grid gap-3 ${gridCols === 2 ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1"
+              }`}
           >
             {day.files.map((file) => (
               <button
                 key={file.id}
                 onClick={() => handleSelectArchiveFile(file.id)}
-                className={`cursor-pointer p-4 border rounded-lg transition text-left group ${
-                  isDarkTheme
+                className={`cursor-pointer p-4 border rounded-lg transition text-left group ${isDarkTheme
                     ? "bg-white/5 hover:bg-white/10 border-white/10"
                     : "bg-slate-100 hover:bg-slate-200 border-slate-300"
-                }`}
+                  }`}
               >
                 <div className="flex items-start justify-between">
                   <div className="flex items-start gap-3 flex-1">
                     <FileVideo
                       size={20}
-                      className={`mt-1 flex-shrink-0 ${
-                        isDarkTheme ? "text-blue-500" : "text-blue-600"
-                      }`}
+                      className={`mt-1 flex-shrink-0 ${isDarkTheme ? "text-blue-500" : "text-blue-600"
+                        }`}
                     />
                     <div className="flex-1">
                       <p
-                        className={`font-semibold text-sm truncate ${
-                          isDarkTheme ? "text-white" : "text-slate-900"
-                        }`}
+                        className={`font-semibold text-sm truncate ${isDarkTheme ? "text-white" : "text-slate-900"
+                          }`}
                       >
                         {file.name}
                       </p>
                       <div
-                        className={`flex items-center gap-2 text-xs mt-1 ${
-                          isDarkTheme ? "text-slate-400" : "text-slate-600"
-                        }`}
+                        className={`flex items-center gap-2 text-xs mt-1 ${isDarkTheme ? "text-slate-400" : "text-slate-600"
+                          }`}
                       >
                         <Clock size={14} />
                         {formatTime(file.createdTime)}
                       </div>
                       <p
-                        className={`text-xs mt-1 ${
-                          isDarkTheme ? "text-slate-500" : "text-slate-700"
-                        }`}
+                        className={`text-xs mt-1 ${isDarkTheme ? "text-slate-500" : "text-slate-700"
+                          }`}
                       >
                         {formatFileSize(file.size)}
                       </p>
                     </div>
                   </div>
-                  <Play
-                    size={18}
-                    className={`flex-shrink-0 mt-1 transition ${
-                      isDarkTheme
-                        ? "text-slate-400 group-hover:text-blue-500"
-                        : "text-slate-600 group-hover:text-blue-600"
-                    }`}
-                  />
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        window.open(`http://localhost:5000/api/stream-archive/${file.id}?download=true`, "_self");
+                      }}
+                      className={`p-2 rounded-full cursor-pointer transition ${isDarkTheme ? "hover:bg-white/10" : "hover:bg-slate-200"
+                        }`}
+                      title="Download"
+                    >
+                      <Download size={18} className={isDarkTheme ? "text-slate-400 hover:text-blue-500" : "text-slate-600 hover:text-blue-600"} />
+                    </button>
+                    <Play
+                      size={18}
+                      className={`flex-shrink-0 transition ${isDarkTheme
+                          ? "text-slate-400 group-hover:text-blue-500"
+                          : "text-slate-600 group-hover:text-blue-600"
+                        }`}
+                    />
+                  </div>
                 </div>
               </button>
             ))}

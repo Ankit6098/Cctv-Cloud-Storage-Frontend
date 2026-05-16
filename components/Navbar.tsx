@@ -27,17 +27,15 @@ export function Navbar({
 }: NavbarProps) {
   return (
     <nav
-      className={`border-b px-6 py-4 flex justify-between items-center backdrop-blur-md ${
-        isDarkTheme
+      className={`border-b px-6 py-4 flex justify-between items-center backdrop-blur-md ${isDarkTheme
           ? "border-white/5 bg-black/20"
           : "border-slate-300 bg-white/20"
-      }`}
+        }`}
     >
       <div className="flex items-center gap-3">
         <div
-          className={`p-2 rounded-lg ${
-            isDarkTheme ? "bg-blue-600" : "bg-blue-500"
-          }`}
+          className={`p-2 rounded-lg ${isDarkTheme ? "bg-blue-600" : "bg-blue-500"
+            }`}
         >
           <TbDeviceCctv size={20} className="text-white" />
         </div>
@@ -46,11 +44,10 @@ export function Navbar({
             Cctv Monitor
           </h1>
           <p
-            className={`text-[10px] font-mono ${
-              isDarkTheme ? "text-slate-500" : "text-slate-600"
-            }`}
+            className={`text-[10px] font-mono ${isDarkTheme ? "text-slate-500" : "text-slate-600"
+              }`}
           >
-            NODE_TX_042 // SECURE_LINE
+            Monitor-24/7
           </p>
         </div>
       </div>
@@ -63,9 +60,8 @@ export function Navbar({
             })}
           </span>
           <span
-            className={`text-[10px] ${
-              isDarkTheme ? "text-slate-500" : "text-slate-600"
-            }`}
+            className={`text-[10px] ${isDarkTheme ? "text-slate-500" : "text-slate-600"
+              }`}
           >
             {currentTime.toLocaleDateString(undefined, {
               weekday: "short",
@@ -86,11 +82,10 @@ export function Navbar({
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
-                className={`cursor-pointer p-2 rounded-lg transition ${
-                  isDarkTheme
+                className={`cursor-pointer p-2 rounded-lg transition ${isDarkTheme
                     ? "hover:bg-white/10 text-slate-500 hover:text-white"
                     : "hover:bg-slate-300 text-slate-700"
-                }`}
+                  }`}
               >
                 <Settings size={18} />
               </button>
@@ -98,17 +93,15 @@ export function Navbar({
 
             <DropdownMenuContent
               align="end"
-              className={`w-[150px] p-1 ${
-                isDarkTheme
+              className={`w-[150px] p-1 ${isDarkTheme
                   ? "bg-slate-900 border-white/10 text-white"
                   : "bg-white border-slate-300 text-slate-900"
-              }`}
+                }`}
             >
               <DropdownMenuItem
                 onClick={() => onThemeChange(true)}
-                className={`p-2 mb-1 text-xs flex items-center gap-2 cursor-pointer ${
-                  isDarkTheme ? "bg-blue-600 text-white " : "hover:bg-slate-200"
-                }`}
+                className={`p-2 mb-1 text-xs flex items-center gap-2 cursor-pointer ${isDarkTheme ? "bg-blue-600 text-white " : "hover:bg-slate-200"
+                  }`}
               >
                 <Moon size={14} />
                 Dark Theme
@@ -116,9 +109,8 @@ export function Navbar({
 
               <DropdownMenuItem
                 onClick={() => onThemeChange(false)}
-                className={`p-2 text-xs flex items-center gap-2 cursor-pointer hover:bg-slate-800 ${
-                  !isDarkTheme ? "bg-blue-500 text-white hover:bg-blue-500" : ""
-                }`}
+                className={`p-2 text-xs flex items-center gap-2 cursor-pointer hover:bg-slate-800 ${!isDarkTheme ? "bg-blue-500 text-white hover:bg-blue-500" : ""
+                  }`}
               >
                 <Sun size={14} />
                 Light Theme

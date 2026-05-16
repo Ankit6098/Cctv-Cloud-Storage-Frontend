@@ -1,6 +1,6 @@
 "use client";
 
-import { Circle, Play, Maximize, Volume2, VolumeX } from "lucide-react";
+import { Circle, Play, Maximize, Volume2, VolumeX, Download } from "lucide-react";
 import { VideoMode } from "@/lib/types";
 
 interface VideoPlayerProps {
@@ -39,9 +39,8 @@ export function VideoPlayer({
 
   return (
     <div
-      className={`relative w-full h-full aspect-video rounded-2xl overflow-hidden border ${
-        isDarkTheme ? "bg-black border-white/10" : "bg-slate-200 border-slate-300"
-      }`}
+      className={`relative w-full h-full aspect-video rounded-2xl overflow-hidden border ${isDarkTheme ? "bg-black border-white/10" : "bg-slate-200 border-slate-300"
+        }`}
     >
       <video
         ref={videoRef}
@@ -79,13 +78,12 @@ export function VideoPlayer({
       {/* Top UI Overlays */}
       <div className="absolute top-4 right-4 flex flex-col gap-2">
         <div
-          className={`flex items-center gap-2 px-3 py-1.5 rounded-md backdrop-blur-md border ${
-            mode === "live"
-              ? "bg-red-500/10 border-red-500/50 text-red-500"
-              : mode === "archive"
+          className={`flex items-center gap-2 px-3 py-1.5 rounded-md backdrop-blur-md border ${mode === "live"
+            ? "bg-red-500/10 border-red-500/50 text-red-500"
+            : mode === "archive"
               ? "bg-blue-500/10 border-blue-500/50 text-blue-500"
               : "bg-blue-500/10 border-blue-500/50 text-blue-500"
-          }`}
+            }`}
         >
           <Circle
             size={8}
@@ -96,8 +94,8 @@ export function VideoPlayer({
             {mode === "live"
               ? "LIVE FEED"
               : mode === "archive"
-              ? "ARCHIVE"
-              : "PREVIEW"}
+                ? "ARCHIVE"
+                : "PREVIEW"}
           </span>
         </div>
       </div>
@@ -121,11 +119,9 @@ export function VideoPlayer({
                   onTouchEnd={() => setIsSeeking(false)}
                   className="w-full h-1 bg-white/20 rounded-lg appearance-none cursor-pointer transition-all duration-150 hover:h-2 group-hover/bar:h-2"
                   style={{
-                    background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${
-                      videoDuration ? (videoCurrentTime / videoDuration) * 100 : 0
-                    }%, rgba(255,255,255,0.2) ${
-                      videoDuration ? (videoCurrentTime / videoDuration) * 100 : 0
-                    }%, rgba(255,255,255,0.2) 100%)`,
+                    background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${videoDuration ? (videoCurrentTime / videoDuration) * 100 : 0
+                      }%, rgba(255,255,255,0.2) ${videoDuration ? (videoCurrentTime / videoDuration) * 100 : 0
+                      }%, rgba(255,255,255,0.2) 100%)`,
                   }}
                 />
                 {/* Animated progress glow */}
@@ -133,9 +129,8 @@ export function VideoPlayer({
                   className="absolute top-1/2 h-1 bg-gradient-to-r from-blue-500 via-blue-400 to-transparent rounded-full blur-lg opacity-50 pointer-events-none transition-all duration-150"
                   style={{
                     left: "0%",
-                    width: `${
-                      videoDuration ? (videoCurrentTime / videoDuration) * 100 : 0
-                    }%`,
+                    width: `${videoDuration ? (videoCurrentTime / videoDuration) * 100 : 0
+                      }%`,
                     transform: "translateY(-50%)",
                   }}
                 ></div>
@@ -154,7 +149,7 @@ export function VideoPlayer({
               onClick={() => {
                 if (videoRef.current) {
                   if (videoRef.current.paused) {
-                    videoRef.current.play().catch(() => {});
+                    videoRef.current.play().catch(() => { });
                   } else {
                     videoRef.current.pause();
                   }
@@ -164,9 +159,9 @@ export function VideoPlayer({
               title={videoRef.current?.paused ? "Play" : "Pause"}
             >
               {videoRef.current?.paused ? (
-                <Play size={18} fill="white" className="animate-pulse" />
+                <Play size={18} fill="white" className="animate-pulse" color="white" />
               ) : (
-                <Play size={18} />
+                <Play size={18} color="white" />
               )}
             </button>
             <button
@@ -174,7 +169,7 @@ export function VideoPlayer({
               className="cursor-pointer p-2.5 rounded-full bg-white/10 hover:bg-white/20 transition-all duration-200 hover:scale-110 active:scale-95"
               title={isMuted ? "Unmute" : "Mute"}
             >
-              {isMuted ? <VolumeX size={18} /> : <Volume2 size={18} />}
+              {isMuted ? <VolumeX size={18} color="white" /> : <Volume2 size={18} color="white" />}
             </button>
             <div className="flex flex-col">
               <span className="text-xs font-bold text-white transition-all duration-200">
@@ -184,12 +179,32 @@ export function VideoPlayer({
           </div>
 
           <div className="flex items-center gap-2">
+            {mode !== "live" && mode !== "preview" && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (videoRef.current?.src) {
+                    let url = videoRef.current.src;
+                    if (url.includes("/api/stream-archive/")) {
+                      url += (url.includes("?") ? "&" : "?") + "download=true";
+                    } else if (url.includes("/recordings/")) {
+                      url = url.replace("/recordings/", "/api/download-local/");
+                    }
+                    window.open(url, "_self");
+                  }
+                }}
+                className="cursor-pointer p-2.5 rounded-full bg-white/10 hover:bg-white/20 transition-all duration-200 hover:scale-110 active:scale-95"
+                title="Download"
+              >
+                <Download size={18} color="white" />
+              </button>
+            )}
             <button
               onClick={toggleFullscreen}
               className="cursor-pointer p-2.5 rounded-full bg-white/10 hover:bg-white/20 transition-all duration-200 hover:scale-110 active:scale-95"
               title="Fullscreen"
             >
-              <Maximize size={18} />
+              <Maximize size={18} color="white" />
             </button>
           </div>
         </div>
