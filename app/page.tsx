@@ -43,6 +43,7 @@ export default function Home() {
     setCurrentRecordingIndex,
     loadingPreview,
     handlePreview,
+    timelineError,
   } = useTimeline(setMode);
 
   const {
@@ -183,6 +184,11 @@ export default function Home() {
       </div>
 
       <main className="max-w-[1600px] mx-auto p-4 md:p-8">
+        {timelineError && (
+          <div className="mb-4 rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-500">
+            {timelineError}
+          </div>
+        )}
         <div className="relative group">
           {mode === "archive" ? (
             <div className="flex flex-col lg:flex-row gap-4 w-full">
